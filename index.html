@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ScoutCommand - Mission Control</title>
+  <title>ScoutCommand - Test Mode</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { -webkit-tap-highlight-color: transparent; }
@@ -77,8 +77,6 @@
 
     <!-- TAB 2: MISSION CONTROL AI PLANNER -->
     <div id="tab-planner" class="tab-content space-y-4">
-      
-      <!-- AI Mission Control Header Card -->
       <div id="aiCard" class="border-2 border-emerald-800 bg-gradient-to-br from-slate-900 to-emerald-950/40 rounded-2xl p-5 space-y-4 shadow-2xl relative overflow-hidden transition-all duration-500">
         <div class="absolute top-0 right-0 p-3 opacity-10 text-7xl transform rotate-12">🧠</div>
         
@@ -92,7 +90,6 @@
           <span class="bg-emerald-900/80 text-emerald-300 font-mono text-[9px] px-2 py-0.5 rounded border border-emerald-700">Confidence: 98.4%</span>
         </div>
 
-        <!-- AI Boot Sequence Terminal -->
         <div id="aiTerminal" class="hidden space-y-3 relative z-10 py-2">
           <div class="flex justify-between text-[10px] text-emerald-300 font-mono uppercase tracking-widest">
             <span id="aiProgressText">Analyzing Weather & Facility Parameters...</span>
@@ -106,7 +103,6 @@
           </div>
         </div>
 
-        <!-- AI Control Form (Auto-suggests property zone based on parameters) -->
         <div id="aiControls" class="space-y-3 relative z-10">
           <div class="bg-slate-950/60 p-3 rounded-xl border border-emerald-900/60 text-xs space-y-1 font-mono">
             <span class="text-emerald-400 font-bold block">💡 AI Environmental Suggestion:</span>
@@ -118,7 +114,6 @@
         </div>
       </div>
 
-      <!-- Generated Timeline & Activity Plan -->
       <div class="space-y-3">
         <h3 class="font-bold text-slate-300 text-xs uppercase tracking-widest px-1">Optimized Property Timeline</h3>
         <div class="space-y-2">
@@ -129,15 +124,6 @@
             </div>
             <h4 class="font-bold text-slate-100 text-sm">Paracord Navigation & Compass Vector</h4>
             <p class="text-[11px] text-emerald-400 font-mono">📍 75 Oriole Pkwy — Outdoor Back Field (Suggested: Clear weather, ideal for tracking)</p>
-          </div>
-
-          <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-2 shadow-md">
-            <div class="flex justify-between items-center">
-              <span class="text-[10px] font-mono text-amber-400 bg-amber-950/50 px-2 py-0.5 rounded border border-amber-800 uppercase">Nov 10, 2026</span>
-              <span class="bg-emerald-950 text-emerald-300 border border-emerald-800 text-[9px] px-2 py-0.5 rounded font-bold uppercase">Confidence: 97%</span>
-            </div>
-            <h4 class="font-bold text-slate-100 text-sm">Kub Kar Prep & Friction Experiments</h4>
-            <p class="text-[11px] text-emerald-400 font-mono">📍 75 Oriole Pkwy — Scout Hall Main Room (Suggested: Cold/wet weather override)</p>
           </div>
         </div>
       </div>
@@ -296,4 +282,21 @@
         { id: 2, name: 'Brookie H.', rank: 2, status: 'absent' },
         { id: 3, name: 'Owen H.', rank: 3, status: 'absent' },
         { id: 4, name: 'Rory M.', rank: 4, status: 'absent' },
-        { id: 5, name: 'Logan K.', r
+        { id: 5, name: 'Logan K.', rank: 5, status: 'absent' },
+        { id: 6, name: 'Liam P.', rank: 6, status: 'absent' },
+        { id: 7, name: 'Charlotte S.', rank: 7, status: 'absent' },
+        { id: 8, name: 'Noah T.', rank: 8, status: 'absent' }
+      ],
+      history: [],
+      animatingId: null,
+      activityIdx: 0,
+      schedule: [
+        { name: 'Knot Relay', dur: '10 min', desc: 'Run relay races tying square knots in the field.' },
+        { name: 'Rotations A', dur: '25 min', desc: 'Group 1: Bearings. Group 2: Cobra weaves.' },
+        { name: 'Rotations B', dur: '25 min', desc: 'Groups switch stations and start new activity.' },
+        { name: 'Closing', dur: '10 min', desc: 'Hand out badges, lower flag, parent dismissal.' }
+      ],
+      badges: [
+        { id: 'b1', name: 'Camping OAS', cat: 'Outdoor', votes: 15, enabled: true },
+        { id: 'b2', name: 'Trail Skills OAS', cat: 'Outdoor', votes: 12, enabled: true },
+        { id: 'b6', name: 'Space Explorer', cat: 'Personal', votes
