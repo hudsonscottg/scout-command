@@ -21,6 +21,14 @@
     .animate-fly {
       animation: flyToTent 0.45s ease-in-out forwards;
     }
+    
+    @keyframes sirenFlash {
+      0%, 100% { background-color: #f59e0b; }
+      50% { background-color: #d97706; transform: scale(1.02); }
+    }
+    .animate-siren {
+      animation: sirenFlash 0.8s infinite;
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans pb-24">
@@ -33,7 +41,6 @@
   </div>
 
   <script>
-    // Fallback error catcher if CDNs lag or fail
     window.addEventListener('error', function(e) {
       var root = document.getElementById('root');
       if (root && root.innerHTML.includes('Loading')) {
@@ -47,7 +54,11 @@
 
     function ScoutCommandApp() {
       const [activeTab, setActiveTab] = useState('attendance');
+      
+      // Simulated Active User Session (This restricts the Advance button to you)
+      const [currentUser, setCurrentUser] = useState('Akela'); 
 
+      // Feature Flags State
       const [flags, setFlags] = useState({
         autoProcurement: true,
         youthVote: true,
@@ -55,7 +66,13 @@
         betaSync: false
       });
 
-      // 1. ATTENDANCE STATE (Sorted by Typical Arrival Sequence)
+      // Budget State
+      const [budget, setBudget] = useState({ crafts: 184.51, outings: 420.00, badges: 110.00 });
+      const [orderApproved, setOrderApproved] = useState(false);
+
+      // -------------------------------------------------------------
+      // 1. ATTENDANCE STATE (Fly into Tent Animation)
+      // -------------------------------------------------------------
       const [cubRoster, setCubRoster] = useState([
         { id: 1, name: 'Benjamin H.', arrivalRank: 1, status: 'absent' },
         { id: 2, name: 'Brookie H.', arrivalRank: 2, status: 'absent' },
@@ -87,17 +104,22 @@
         setAttendanceHistory(prev => prev.slice(0, -1));
       };
 
-      // 2. PLANNER & MEETINGS STATE
+      // -------------------------------------------------------------
+      // 2. PLANNER & PROPERTY ENGINE
+      // -------------------------------------------------------------
       const [selectedMeetingId, setSelectedMeetingId] = useState(null);
+      const [propertyZone, setPropertyZone] = useState('Outdoor Back Field');
       const [meetings, setMeetings] = useState([
         {
           id: 1,
           date: 'Oct 13, 2026',
           title: 'Paracord & Compass Navigation',
           theme: 'Trail Skills OAS Stage 2',
+          location: '75 Oriole Pkwy - Outdoor Back Field',
+          weatherNote: 'Clear, 14°C (Ideal for outdoor compass course)',
           actionRequired: true,
           actionNotice: 'Need Scouter to purchase buckles & prep paracord',
-          scouterCoverageCount: 3,
+          scouterCoverageCount: 4,
           stations: [
             { id: 's1', name: 'Station A: Compass Bearings', assignedTo: 'Baloo' },
             { id: 's2', name: 'Station B: Paracord Weaving', assignedTo: 'Unassigned' },
@@ -113,6 +135,8 @@
           date: 'Oct 20, 2026',
           title: 'Campfire Safety & Edible Fires',
           theme: 'Bushcraft OAS Stage 1',
+          location: '75 Oriole Pkwy - Outdoor Fire Pit Zone',
+          weatherNote: 'Cool, 9°C (Campfire approved)',
           actionRequired: false,
           actionNotice: 'All supplies & station leads confirmed',
           scouterCoverageCount: 4,
@@ -129,81 +153,96 @@
       const handleAssignStation = (meetingId, stationId, scouterName) => {
         setMeetings(prev => prev.map(m => {
           if (m.id !== meetingId) return m;
-          return {
-            ...m,
-            stations: m.stations.map(st => st.id === stationId ? { ...st, assignedTo: scouterName } : st)
-          };
+          return { ...m, stations: m.stations.map(st => st.id === stationId ? { ...st, assignedTo: scouterName } : st) };
         }));
       };
 
       const handleClaimTask = (meetingId, taskId, scouterName) => {
         setMeetings(prev => prev.map(m => {
           if (m.id !== meetingId) return m;
-          return {
-            ...m,
-            actionItems: m.actionItems.map(a => a.id === taskId ? { ...a, assignedTo: scouterName } : a)
-          };
+          return { ...m, actionItems: m.actionItems.map(a => a.id === taskId ? { ...a, assignedTo: scouterName } : a) };
         }));
       };
 
-      // 3. BADGES & ADMIN FILTER STATE
+      // -------------------------------------------------------------
+      // 3. CAMPS PLANNER
+      // -------------------------------------------------------------
+      const [selectedCampId, setSelectedCampId] = useState(null);
+      const [campWeekends] = useState([
+        {
+          id: 'c1', date: 'Oct 17–18, 2026', month: 'October', scouterScore: '2/5 Scouters', isBestPick: false,
+          campsiteRec: 'Laurel Creek Conservation Area', accomType: 'Tenting Field', driveTime: '15 mins',
+          weatherForecast: '12°C Day / 4°C Night', activities: 'Compass trail, leaf ID', gapNotice: 'Back-to-back with Oct 24.'
+        },
+        {
+          id: 'c2', date: 'Oct 24–25, 2026', month: 'October', scouterScore: '5/5 Scouters', isBestPick: true,
+          campsiteRec: 'Blue Springs Scout Reserve', accomType: 'Unheated Cabin', driveTime: '45 mins',
+          weatherForecast: '10°C Day / 2°C Night', activities: 'Orienteering, pioneering', gapNotice: '⭐ Optimal October Camp'
+        },
+        {
+          id: 'c4', date: 'Nov 21–22, 2026', month: 'November', scouterScore: '4/5 Scouters', isBestPick: true,
+          campsiteRec: 'Laurel Creek Conservation Area', accomType: 'Heated Group Lodge', driveTime: '15 mins',
+          weatherForecast: '3°C Day / -3°C Night', activities: 'Indoor STEM survival', gapNotice: '⭐ Optimal November Camp'
+        }
+      ]);
+
+      // -------------------------------------------------------------
+      // 4. LIVE MEETING EXECUTION STATE
+      // -------------------------------------------------------------
+      const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
+      const [rotationAlert, setRotationAlert] = useState(false);
+      const liveSchedule = [
+        { name: 'Gathering: Knot Relay', duration: '10 min', desc: 'Run relay races tying square knots in the field.' },
+        { name: 'Opening Ceremony', duration: '5 min', desc: 'Flag break, pack circle, and grand roar.' },
+        { name: 'Rotations A: Compass / Paracord', duration: '25 min', desc: 'Group 1: Bearings. Group 2: Cobra weaves.' },
+        { name: 'Rotations B: Swap Stations', duration: '25 min', desc: 'Groups switch stations and start new activity.' },
+        { name: 'Active Game: Dodgeball', duration: '15 min', desc: 'Compass points dodgeball to burn off energy.' },
+        { name: 'Closing & Announcements', duration: '10 min', desc: 'Hand out badges, lower flag, parent dismissal.' }
+      ];
+
+      const handleNextActivity = () => {
+        if (currentActivityIndex < liveSchedule.length - 1) {
+          setCurrentActivityIndex(prev => prev + 1);
+          setRotationAlert(true);
+          // Try haptic vibration on supported mobile devices
+          if (navigator.vibrate) { navigator.vibrate([300, 100, 300, 100, 600]); }
+          // Auto-hide the flash alert after 4 seconds
+          setTimeout(() => setRotationAlert(false), 4000);
+        }
+      };
+
+      const [helpModalOpen, setHelpModalOpen] = useState(false);
+      const [helpSentMessage, setHelpSentMessage] = useState(null);
+      const triggerHelpAlert = (level) => {
+        setHelpSentMessage(level === 'urgent' ? '🚨 URGENT: Leaders notified to come immediately!' : '🙋 ROUTINE: Leaders notified to drop by when free.');
+        setTimeout(() => { setHelpModalOpen(false); setHelpSentMessage(null); }, 2000);
+      };
+
+      // -------------------------------------------------------------
+      // 5. BADGES & ADMIN FILTER STATE
+      // -------------------------------------------------------------
       const [scouterAdminMode, setScouterAdminMode] = useState(false);
       const [allBadges, setAllBadges] = useState([
         { id: 'b1', name: 'Camping OAS', category: 'Outdoor Adventure', votes: 15, enabled: true },
         { id: 'b2', name: 'Trail Skills OAS', category: 'Outdoor Adventure', votes: 12, enabled: true },
         { id: 'b3', name: 'Emergency Skills OAS', category: 'Outdoor Adventure', votes: 9, enabled: true },
-        { id: 'b4', name: 'Aquatics OAS', category: 'Outdoor Adventure', votes: 6, enabled: true },
-        { id: 'b5', name: 'Winter Skills OAS', category: 'Outdoor Adventure', votes: 4, enabled: false },
-        { id: 'b6', name: 'Space Explorer', category: 'Personal Achievement', votes: 11, enabled: true },
-        { id: 'b7', name: 'Wilderness Chef', category: 'Personal Achievement', votes: 14, enabled: true },
-        { id: 'b8', name: 'Builder & Carpenter', category: 'Personal Achievement', votes: 8, enabled: true }
+        { id: 'b6', name: 'Space Explorer', category: 'Personal Achievement', votes: 11, enabled: true }
       ]);
+      const toggleBadgeEnabled = (id) => { setAllBadges(prev => prev.map(b => b.id === id ? { ...b, enabled: !b.enabled } : b)); };
+      const handleYouthVote = (id) => { setAllBadges(prev => prev.map(b => b.id === id ? { ...b, votes: b.votes + 1 } : b)); };
 
-      const toggleBadgeEnabled = (id) => {
-        setAllBadges(prev => prev.map(b => b.id === id ? { ...b, enabled: !b.enabled } : b));
-      };
-
-      const handleYouthVote = (id) => {
-        setAllBadges(prev => prev.map(b => b.id === id ? { ...b, votes: b.votes + 1 } : b));
-      };
-
-      // 4. PARENT LOGISTICS SURVEY STATE
-      const [parentSurvey, setParentSurvey] = useState({
-        maxDriveMinutes: 60,
-        canCarpool: 'Yes, 3 extra seats',
-        volunteeredTasks: []
-      });
-
-      const parentTaskOptions = [
-        '🔥 Fill Propane Tanks for Camp',
-        '🛒 Pick up Meeting Craft Supplies',
-        '🍕 Assist with Meeting Snack Prep',
-        '🧹 Stay 15 mins for Hall Cleanup'
-      ];
-
+      // -------------------------------------------------------------
+      // 6. PARENT LOGISTICS SURVEY STATE
+      // -------------------------------------------------------------
+      const [parentSurvey, setParentSurvey] = useState({ maxDriveMinutes: 60, canCarpool: 'Yes, 3 extra seats', volunteeredTasks: [] });
+      const parentTaskOptions = ['🔥 Fill Propane Tanks', '🛒 Pick up Craft Supplies', '🍕 Snack Prep', '🧹 Hall Cleanup'];
       const toggleParentTask = (task) => {
-        setParentSurvey(prev => {
-          const exists = prev.volunteeredTasks.includes(task);
-          return {
-            ...prev,
-            volunteeredTasks: exists 
-              ? prev.volunteeredTasks.filter(t => t !== task)
-              : [...prev.volunteeredTasks, task]
-          };
-        });
+        setParentSurvey(prev => ({
+          ...prev, volunteeredTasks: prev.volunteeredTasks.includes(task) ? prev.volunteeredTasks.filter(t => t !== task) : [...prev.volunteeredTasks, task]
+        }));
       };
 
-      // 5. HELP MODAL STATE
-      const [helpModalOpen, setHelpModalOpen] = useState(false);
-      const [helpSentMessage, setHelpSentMessage] = useState(null);
-
-      const triggerHelpAlert = (level) => {
-        setHelpSentMessage(level === 'urgent' ? '🚨 URGENT ALERT: Leaders notified to come immediately!' : '🙋 ROUTINE ALERT: Leaders notified to drop by when free.');
-        setTimeout(() => {
-          setHelpModalOpen(false);
-          setHelpSentMessage(null);
-        }, 2000);
-      };
+      const handleApproveOrder = () => { if (!orderApproved) { setBudget(prev => ({ ...prev, crafts: prev.crafts - 15.49 })); setOrderApproved(true); } };
 
       const absentCubs = cubRoster.filter(c => c.status === 'absent').sort((a,b) => a.arrivalRank - b.arrivalRank);
       const presentCubs = cubRoster.filter(c => c.status === 'present');
@@ -211,7 +250,6 @@
       return (
         <div className="max-w-md mx-auto min-h-screen bg-slate-900 shadow-2xl relative flex flex-col">
           
-          {/* Header Bar */}
           <header className="bg-emerald-950 border-b border-emerald-800 p-4 sticky top-0 z-30 flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <span className="text-2xl">⚜️</span>
@@ -220,184 +258,91 @@
                 <p className="text-xs text-emerald-300">1st Elmira Cub Pack</p>
               </div>
             </div>
-            <span className="bg-emerald-900 text-emerald-200 text-xs px-2.5 py-1 rounded-full border border-emerald-700 font-mono">
-              2026–2027
+            <span className="bg-emerald-900 text-emerald-200 text-[10px] px-2.5 py-1 rounded-full border border-emerald-700 font-mono">
+              Role: {currentUser}
             </span>
           </header>
 
-          {/* Main Content Area */}
           <main className="flex-1 p-4 space-y-4 overflow-y-auto no-scrollbar">
 
             {/* TAB 1: ATTENDANCE */}
             {activeTab === 'attendance' && (
               <div className="space-y-4">
-                
                 <div className="bg-emerald-950 border-2 border-emerald-600 rounded-2xl p-4 text-center relative overflow-hidden shadow-xl">
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-xs font-mono text-emerald-400">CHECK-IN STATION</span>
-                    <button 
-                      onClick={handleUndoAttendance}
-                      disabled={attendanceHistory.length === 0}
-                      className={`text-xs px-2.5 py-1 rounded-lg border font-bold flex items-center gap-1 ${attendanceHistory.length > 0 ? 'bg-amber-500 text-slate-950 border-amber-400 shadow' : 'bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed'}`}
-                    >
+                    <button onClick={handleUndoAttendance} disabled={attendanceHistory.length === 0} className={`text-xs px-2.5 py-1 rounded-lg border font-bold flex items-center gap-1 ${attendanceHistory.length > 0 ? 'bg-amber-500 text-slate-950 border-amber-400 shadow' : 'bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed'}`}>
                       ↩️ Undo Last
                     </button>
                   </div>
-
                   <div className="text-5xl my-2">🏕️</div>
                   <h3 className="font-bold text-amber-400 text-base">Present in the Tent ({presentCubs.length} / {cubRoster.length})</h3>
-
                   <div className="flex flex-wrap justify-center gap-1.5 mt-3 max-h-28 overflow-y-auto no-scrollbar">
-                    {presentCubs.length === 0 ? (
-                      <span className="text-xs text-emerald-500 italic">No Cubs checked in yet...</span>
-                    ) : (
-                      presentCubs.map(c => (
-                        <span key={c.id} className="bg-emerald-800 border border-emerald-600 text-emerald-100 text-xs px-2.5 py-1 rounded-full font-bold shadow-sm">
-                          ✓ {c.name}
-                        </span>
-                      ))
-                    )}
+                    {presentCubs.length === 0 ? <span className="text-xs text-emerald-500 italic">No Cubs checked in yet...</span> : presentCubs.map(c => <span key={c.id} className="bg-emerald-800 border border-emerald-600 text-emerald-100 text-xs px-2.5 py-1 rounded-full font-bold shadow-sm">✓ {c.name}</span>)}
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tap to Check In (Sorted by Typical Arrival)</h4>
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tap to Check In (By Typical Arrival)</h4>
                     <span className="text-[10px] text-slate-500 font-mono">{absentCubs.length} Remaining</span>
                   </div>
-
-                  {absentCubs.length === 0 ? (
-                    <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center text-emerald-400 font-bold text-sm">
-                      🎉 All Cubs have arrived and are in the tent!
-                    </div>
-                  ) : (
+                  {absentCubs.length === 0 ? <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center text-emerald-400 font-bold text-sm">🎉 All Cubs have arrived!</div> : (
                     <div className="space-y-2">
                       {absentCubs.map((cub) => {
                         const isAnimating = animatingId === cub.id;
                         return (
-                          <button
-                            key={cub.id}
-                            onClick={() => handleCheckIn(cub.id)}
-                            className={`w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 p-3.5 rounded-xl text-left flex items-center justify-between transition-all duration-300 shadow-sm ${isAnimating ? 'animate-fly border-emerald-400 bg-emerald-900/80' : ''}`}
-                          >
+                          <button key={cub.id} onClick={() => handleCheckIn(cub.id)} className={`w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 p-3.5 rounded-xl text-left flex items-center justify-between transition-all duration-300 shadow-sm ${isAnimating ? 'animate-fly border-emerald-400 bg-emerald-900/80' : ''}`}>
                             <div className="flex items-center space-x-3">
-                              <span className="w-6 h-6 rounded-full bg-slate-900 border border-slate-700 text-amber-400 font-mono text-xs flex items-center justify-center font-bold">
-                                #{cub.arrivalRank}
-                              </span>
+                              <span className="w-6 h-6 rounded-full bg-slate-900 border border-slate-700 text-amber-400 font-mono text-xs flex items-center justify-center font-bold">#{cub.arrivalRank}</span>
                               <span className="font-bold text-slate-100 text-sm">{cub.name}</span>
                             </div>
-                            <span className="text-xs bg-emerald-950 text-emerald-300 border border-emerald-800 px-3 py-1 rounded-lg font-bold">
-                              Touch to Arrive ⛺
-                            </span>
+                            <span className="text-xs bg-emerald-950 text-emerald-300 border border-emerald-800 px-3 py-1 rounded-lg font-bold">Touch to Arrive ⛺</span>
                           </button>
                         );
                       })}
                     </div>
                   )}
                 </div>
-
               </div>
             )}
 
             {/* TAB 2: PLANNER */}
             {activeTab === 'planner' && (
               <div className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-bold text-slate-300 text-sm">Weekly Program Overview</h3>
-                    <span className="text-xs text-emerald-400 font-mono">Tap Meeting for Signups</span>
+                <div className="bg-slate-800 border border-emerald-800/80 rounded-xl p-4 space-y-3">
+                  <div className="flex justify-between items-center border-b border-slate-700 pb-2">
+                    <div>
+                      <h2 className="font-bold text-emerald-400 text-sm flex items-center gap-1.5"><span>📍</span> Property Planner (75 Oriole Pkwy)</h2>
+                      <p className="text-[10px] text-slate-400">Weather-aware zone picker for Elmira hall & grounds</p>
+                    </div>
+                    <span className="text-[10px] font-mono bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded">Gemini AI</span>
                   </div>
+                  <div className="space-y-2 text-xs">
+                    <label className="text-slate-300 block">Select Active Property Zone:</label>
+                    <select value={propertyZone} onChange={(e) => setPropertyZone(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-slate-100 font-bold">
+                      <option value="Outdoor Back Field">Outdoor Back Field</option>
+                      <option value="Outdoor Fire Pit Zone">Outdoor Fire Pit Zone</option>
+                      <option value="Main Gym / Hall">Main Gym / Hall</option>
+                      <option value="Basement Craft Room">Basement Craft Room</option>
+                    </select>
+                    <div className="bg-slate-900 p-2.5 rounded border border-slate-800 text-[11px] text-slate-300 flex justify-between">
+                      <span>Seasonal Rec:</span><strong className="text-amber-400">{propertyZone.includes('Outdoor') ? 'Sept/Oct & May/June' : 'Nov–Mar Cold/Rain'}</strong>
+                    </div>
+                  </div>
+                </div>
 
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center"><h3 className="font-bold text-slate-300 text-sm">Weekly Meetings</h3><span className="text-xs text-emerald-400 font-mono">Tap for Signups</span></div>
                   {meetings.map((m) => (
                     <div key={m.id} className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-sm">
-                      <div 
-                        onClick={() => setSelectedMeetingId(selectedMeetingId === m.id ? null : m.id)}
-                        className="p-4 cursor-pointer flex items-center justify-between hover:bg-slate-750 transition"
-                      >
+                      <div onClick={() => setSelectedMeetingId(selectedMeetingId === m.id ? null : m.id)} className="p-4 cursor-pointer flex justify-between hover:bg-slate-750 transition">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-mono text-amber-400 bg-amber-950 px-2 py-0.5 rounded border border-amber-800">
-                              {m.date}
-                            </span>
-                            <span className="text-xs text-slate-400">({m.scouterCoverageCount} Scouters)</span>
+                            <span className="text-xs font-mono text-amber-400 bg-amber-950 px-2 py-0.5 rounded border border-amber-800">{m.date}</span>
                           </div>
                           <h4 className="font-bold text-slate-100 text-base">{m.title}</h4>
-                          <p className="text-xs text-emerald-400">{m.theme}</p>
+                          <p className="text-[11px] text-slate-400">📍 {m.location}</p>
                         </div>
-
                         <div>
-                          {m.actionRequired ? (
-                            <span className="bg-rose-950 text-rose-300 border border-rose-800 text-xs px-2.5 py-1 rounded-full font-bold">
-                              ⚠️ Action Needed
-                            </span>
-                          ) : (
-                            <span className="bg-emerald-950 text-emerald-300 border border-emerald-800 text-xs px-2.5 py-1 rounded-full font-bold">
-                              ✓ Ready
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {selectedMeetingId === m.id && (
-                        <div className="bg-slate-900 p-4 border-t border-slate-700 space-y-4 text-xs">
-                          <div className={`p-2.5 rounded-lg border ${m.actionRequired ? 'bg-rose-950/60 border-rose-800 text-rose-200' : 'bg-emerald-950/60 border-emerald-800 text-emerald-200'}`}>
-                            <strong>Status Note:</strong> {m.actionNotice}
-                          </div>
-
-                          <div className="space-y-2">
-                            <h5 className="font-bold text-amber-400 text-xs uppercase tracking-wider">Station Assignments</h5>
-                            {m.stations.map((st) => (
-                              <div key={st.id} className="bg-slate-800 p-2.5 rounded-lg border border-slate-700 flex items-center justify-between">
-                                <span className="font-bold text-slate-200">{st.name}</span>
-                                <div className="flex items-center gap-2">
-                                  <span className={`font-mono text-[11px] ${st.assignedTo === 'Unassigned' ? 'text-amber-400 font-bold' : 'text-emerald-300'}`}>
-                                    {st.assignedTo}
-                                  </span>
-                                  {st.assignedTo === 'Unassigned' && (
-                                    <button 
-                                      onClick={() => handleAssignStation(m.id, st.id, 'Akela')}
-                                      className="bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-1 rounded text-[10px] font-bold"
-                                    >
-                                      Sign Up
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-
-                          <div className="space-y-2 pt-1">
-                            <h5 className="font-bold text-amber-400 text-xs uppercase tracking-wider">Action Items</h5>
-                            {m.actionItems.map((act) => (
-                              <div key={act.id} className="bg-slate-800 p-2.5 rounded-lg border border-slate-700 flex items-center justify-between">
-                                <span className="text-slate-300">{act.task}</span>
-                                <div className="flex items-center gap-2">
-                                  <span className={`font-mono text-[11px] ${act.assignedTo === 'Unassigned' ? 'text-rose-400 font-bold' : 'text-slate-400'}`}>
-                                    {act.assignedTo}
-                                  </span>
-                                  {act.assignedTo === 'Unassigned' && (
-                                    <button 
-                                      onClick={() => handleClaimTask(m.id, act.id, 'Akela')}
-                                      className="bg-amber-500 hover:bg-amber-400 text-slate-950 px-2 py-1 rounded text-[10px] font-bold"
-                                    >
-                                      Claim
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* TAB 3: LIVE */}
-            {activeTab === 'live' && (
-              <div className="space-y-4">
-                <button 
-                  onClick={() => setHelpModalOpen(true)}
-                  className="w-full bg-slate-800 hover:bg-slate-750 border-2 border-amber-500 text-amber-400 font-bold py-3.5 rounded-xl shad
+                         
