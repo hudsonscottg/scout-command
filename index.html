@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ScoutCommand - Mobile Scouter Hub</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
   <style>
     body { -webkit-tap-highlight-color: transparent; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -18,61 +18,41 @@
       50% { transform: translateY(-70px) scale(0.6) rotate(-6deg); opacity: 0.8; }
       100% { transform: translateY(-140px) scale(0.1) rotate(12deg); opacity: 0; }
     }
-    .animate-fly {
-      animation: flyToTent 0.45s ease-in-out forwards;
-    }
+    .animate-fly { animation: flyToTent 0.45s ease-in-out forwards; }
     
     @keyframes sirenFlash {
       0%, 100% { background-color: #f59e0b; }
       50% { background-color: #d97706; transform: scale(1.02); }
     }
-    .animate-siren {
-      animation: sirenFlash 0.8s infinite;
+    .animate-siren { animation: sirenFlash 0.8s infinite; }
+
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 10px #34d399, inset 0 0 10px #34d399; }
+      50% { box-shadow: 0 0 25px #10b981, inset 0 0 20px #10b981; }
     }
+    .ai-glow { animation: pulseGlow 2s infinite; }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans pb-24">
+<body className="bg-slate-950 text-slate-100 min-h-screen font-sans pb-24">
 
   <div id="root">
-    <div class="flex flex-col items-center justify-center min-h-screen text-slate-400 text-sm font-mono space-y-3">
-      <div class="text-3xl animate-bounce">⚜️</div>
+    <div className="flex flex-col items-center justify-center min-h-screen text-slate-400 text-sm font-mono space-y-3">
+      <div className="text-3xl animate-bounce">⚜️</div>
       <div>Loading ScoutCommand...</div>
     </div>
   </div>
-
-  <script>
-    window.addEventListener('error', function(e) {
-      var root = document.getElementById('root');
-      if (root && root.innerHTML.includes('Loading')) {
-        root.innerHTML = '<div style="color: #f87171; padding: 30px; text-align: center; font-family: sans-serif; font-size: 14px;"><b>App Loading Notice</b><br/><br/>Network script delayed. Please refresh the page.</div>';
-      }
-    });
-  </script>
 
   <script type="text/babel">
     const { useState, useEffect } = React;
 
     function ScoutCommandApp() {
-      const [activeTab, setActiveTab] = useState('attendance');
-      
-      // Simulated Active User Session (This restricts the Advance button to you)
+      const [activeTab, setActiveTab] = useState('planner');
       const [currentUser, setCurrentUser] = useState('Akela'); 
-
-      // Feature Flags State
-      const [flags, setFlags] = useState({
-        autoProcurement: true,
-        youthVote: true,
-        weatherPivot: true,
-        betaSync: false
-      });
-
-      // Budget State
+      const [flags, setFlags] = useState({ autoProcurement: true, youthVote: true, weatherPivot: true, betaSync: false });
       const [budget, setBudget] = useState({ crafts: 184.51, outings: 420.00, badges: 110.00 });
       const [orderApproved, setOrderApproved] = useState(false);
 
-      // -------------------------------------------------------------
-      // 1. ATTENDANCE STATE (Fly into Tent Animation)
-      // -------------------------------------------------------------
+      // 1. ATTENDANCE STATE
       const [cubRoster, setCubRoster] = useState([
         { id: 1, name: 'Benjamin H.', arrivalRank: 1, status: 'absent' },
         { id: 2, name: 'Brookie H.', arrivalRank: 2, status: 'absent' },
@@ -81,9 +61,7 @@
         { id: 5, name: 'Logan K.', arrivalRank: 5, status: 'absent' },
         { id: 6, name: 'Liam P.', arrivalRank: 6, status: 'absent' },
         { id: 7, name: 'Charlotte S.', arrivalRank: 7, status: 'absent' },
-        { id: 8, name: 'Noah T.', arrivalRank: 8, status: 'absent' },
-        { id: 9, name: 'Mason R.', arrivalRank: 9, status: 'absent' },
-        { id: 10, name: 'Ava W.', arrivalRank: 10, status: 'absent' }
+        { id: 8, name: 'Noah T.', arrivalRank: 8, status: 'absent' }
       ]);
       const [animatingId, setAnimatingId] = useState(null);
       const [attendanceHistory, setAttendanceHistory] = useState([]);
@@ -96,7 +74,6 @@
           setAnimatingId(null);
         }, 400);
       };
-
       const handleUndoAttendance = () => {
         if (attendanceHistory.length === 0) return;
         const lastId = attendanceHistory[attendanceHistory.length - 1];
@@ -104,99 +81,69 @@
         setAttendanceHistory(prev => prev.slice(0, -1));
       };
 
-      // -------------------------------------------------------------
-      // 2. PLANNER & PROPERTY ENGINE
-      // -------------------------------------------------------------
+      // 2. UNREAL AI PLANNER ENGINE
+      const [isAIPlanning, setIsAIPlanning] = useState(false);
+      const [aiStep, setAiStep] = useState(0);
+      const aiStatusMessages = [
+        "Initializing Gemini Planning Engine...",
+        "Analyzing Elmira historical weather patterns for Oct/Nov...",
+        "Cross-referencing youth badge gaps in ScoutsTracker...",
+        "Balancing 75 Oriole Pkwy facility zones with Scouter ratios...",
+        "Generating optimal season program..."
+      ];
+
+      const triggerAISeasonPlan = () => {
+        setIsAIPlanning(true);
+        setAiStep(0);
+        let step = 0;
+        const interval = setInterval(() => {
+          step++;
+          setAiStep(step);
+          if (step >= aiStatusMessages.length) {
+            clearInterval(interval);
+            setTimeout(() => setIsAIPlanning(false), 800);
+          }
+        }, 1200);
+      };
+
       const [selectedMeetingId, setSelectedMeetingId] = useState(null);
       const [propertyZone, setPropertyZone] = useState('Outdoor Back Field');
       const [meetings, setMeetings] = useState([
         {
-          id: 1,
-          date: 'Oct 13, 2026',
-          title: 'Paracord & Compass Navigation',
-          theme: 'Trail Skills OAS Stage 2',
-          location: '75 Oriole Pkwy - Outdoor Back Field',
-          weatherNote: 'Clear, 14°C (Ideal for outdoor compass course)',
-          actionRequired: true,
-          actionNotice: 'Need Scouter to purchase buckles & prep paracord',
-          scouterCoverageCount: 4,
-          stations: [
-            { id: 's1', name: 'Station A: Compass Bearings', assignedTo: 'Baloo' },
-            { id: 's2', name: 'Station B: Paracord Weaving', assignedTo: 'Unassigned' },
-            { id: 's3', name: 'Gathering Game: Knot Relay', assignedTo: 'Kaa' }
-          ],
-          actionItems: [
-            { id: 'a1', task: 'Pick up propane tanks', assignedTo: 'Parent Volunteer' },
-            { id: 'a2', task: 'Buy 100ft paracord from Amazon', assignedTo: 'Unassigned' }
-          ]
+          id: 1, date: 'Oct 13, 2026', title: 'Paracord & Compass Navigation', theme: 'Trail Skills OAS Stage 2', location: '75 Oriole Pkwy - Outdoor Back Field', weatherNote: 'Clear, 14°C (Ideal for outdoor compass course)', actionRequired: true, actionNotice: 'Need Scouter to purchase buckles & prep paracord', scouterCoverageCount: 4,
+          stations: [ { id: 's1', name: 'Station A: Compass Bearings', assignedTo: 'Baloo' }, { id: 's2', name: 'Station B: Paracord Weaving', assignedTo: 'Unassigned' } ],
+          actionItems: [ { id: 'a1', task: 'Buy 100ft paracord from Amazon', assignedTo: 'Unassigned' } ]
         },
         {
-          id: 2,
-          date: 'Oct 20, 2026',
-          title: 'Campfire Safety & Edible Fires',
-          theme: 'Bushcraft OAS Stage 1',
-          location: '75 Oriole Pkwy - Outdoor Fire Pit Zone',
-          weatherNote: 'Cool, 9°C (Campfire approved)',
-          actionRequired: false,
-          actionNotice: 'All supplies & station leads confirmed',
-          scouterCoverageCount: 4,
-          stations: [
-            { id: 's4', name: 'Station A: Pretzel Fire Building', assignedTo: 'Bagheera' },
-            { id: 's5', name: 'Station B: Spark Lighting Safety', assignedTo: 'Akela' }
-          ],
-          actionItems: [
-            { id: 'a3', task: 'Bring pretzel sticks & marshmallows', assignedTo: 'Akela' }
-          ]
+          id: 2, date: 'Oct 20, 2026', title: 'Campfire Safety & Edible Fires', theme: 'Bushcraft OAS Stage 1', location: '75 Oriole Pkwy - Outdoor Fire Pit Zone', weatherNote: 'Cool, 9°C (Campfire approved)', actionRequired: false, actionNotice: 'All supplies & station leads confirmed', scouterCoverageCount: 4,
+          stations: [ { id: 's4', name: 'Station A: Pretzel Fire Building', assignedTo: 'Bagheera' }, { id: 's5', name: 'Station B: Spark Lighting Safety', assignedTo: 'Akela' } ],
+          actionItems: [ { id: 'a3', task: 'Bring pretzel sticks & marshmallows', assignedTo: 'Akela' } ]
         }
       ]);
 
       const handleAssignStation = (meetingId, stationId, scouterName) => {
-        setMeetings(prev => prev.map(m => {
-          if (m.id !== meetingId) return m;
-          return { ...m, stations: m.stations.map(st => st.id === stationId ? { ...st, assignedTo: scouterName } : st) };
-        }));
+        setMeetings(prev => prev.map(m => { if (m.id !== meetingId) return m; return { ...m, stations: m.stations.map(st => st.id === stationId ? { ...st, assignedTo: scouterName } : st) }; }));
       };
-
       const handleClaimTask = (meetingId, taskId, scouterName) => {
-        setMeetings(prev => prev.map(m => {
-          if (m.id !== meetingId) return m;
-          return { ...m, actionItems: m.actionItems.map(a => a.id === taskId ? { ...a, assignedTo: scouterName } : a) };
-        }));
+        setMeetings(prev => prev.map(m => { if (m.id !== meetingId) return m; return { ...m, actionItems: m.actionItems.map(a => a.id === taskId ? { ...a, assignedTo: scouterName } : a) }; }));
       };
 
-      // -------------------------------------------------------------
-      // 3. CAMPS PLANNER
-      // -------------------------------------------------------------
+      // 3. CAMPS PLANNER (3-Week Spacing)
       const [selectedCampId, setSelectedCampId] = useState(null);
       const [campWeekends] = useState([
-        {
-          id: 'c1', date: 'Oct 17–18, 2026', month: 'October', scouterScore: '2/5 Scouters', isBestPick: false,
-          campsiteRec: 'Laurel Creek Conservation Area', accomType: 'Tenting Field', driveTime: '15 mins',
-          weatherForecast: '12°C Day / 4°C Night', activities: 'Compass trail, leaf ID', gapNotice: 'Back-to-back with Oct 24.'
-        },
-        {
-          id: 'c2', date: 'Oct 24–25, 2026', month: 'October', scouterScore: '5/5 Scouters', isBestPick: true,
-          campsiteRec: 'Blue Springs Scout Reserve', accomType: 'Unheated Cabin', driveTime: '45 mins',
-          weatherForecast: '10°C Day / 2°C Night', activities: 'Orienteering, pioneering', gapNotice: '⭐ Optimal October Camp'
-        },
-        {
-          id: 'c4', date: 'Nov 21–22, 2026', month: 'November', scouterScore: '4/5 Scouters', isBestPick: true,
-          campsiteRec: 'Laurel Creek Conservation Area', accomType: 'Heated Group Lodge', driveTime: '15 mins',
-          weatherForecast: '3°C Day / -3°C Night', activities: 'Indoor STEM survival', gapNotice: '⭐ Optimal November Camp'
-        }
+        { id: 'c1', date: 'Oct 17–18, 2026', month: 'October', scouterScore: '2/5 Scouters', isBestPick: false, campsiteRec: 'Laurel Creek Conservation Area', accomType: 'Tenting Field', driveTime: '15 mins', weatherForecast: '12°C Day / 4°C Night', activities: 'Compass trail, leaf ID', gapNotice: 'Back-to-back with Oct 24.' },
+        { id: 'c2', date: 'Oct 24–25, 2026', month: 'October', scouterScore: '5/5 Scouters', isBestPick: true, campsiteRec: 'Blue Springs Scout Reserve', accomType: 'Unheated Cabin', driveTime: '45 mins', weatherForecast: '10°C Day / 2°C Night', activities: 'Orienteering, pioneering', gapNotice: '⭐ Optimal October Camp (Full Leadership)' },
+        { id: 'c3', date: 'Nov 07–08, 2026', month: 'November', scouterScore: '3/5 Scouters', isBestPick: false, campsiteRec: 'Camp Cataraqui', accomType: 'Heated Bunkhouse Cabin', driveTime: '30 mins', weatherForecast: '5°C Day / -2°C Night', activities: 'Night compass trail', gapNotice: 'Only 2 weeks after Oct 24 camp.' },
+        { id: 'c4', date: 'Nov 21–22, 2026', month: 'November', scouterScore: '4/5 Scouters', isBestPick: true, campsiteRec: 'Laurel Creek Group Lodge', accomType: 'Heated Group Lodge', driveTime: '15 mins', weatherForecast: '3°C Day / -3°C Night', activities: 'Indoor STEM survival', gapNotice: '⭐ Optimal November Camp (4 Weeks Spacing)' }
       ]);
 
-      // -------------------------------------------------------------
-      // 4. LIVE MEETING EXECUTION STATE
-      // -------------------------------------------------------------
+      // 4. LIVE MEETING STATE
       const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
       const [rotationAlert, setRotationAlert] = useState(false);
       const liveSchedule = [
         { name: 'Gathering: Knot Relay', duration: '10 min', desc: 'Run relay races tying square knots in the field.' },
-        { name: 'Opening Ceremony', duration: '5 min', desc: 'Flag break, pack circle, and grand roar.' },
         { name: 'Rotations A: Compass / Paracord', duration: '25 min', desc: 'Group 1: Bearings. Group 2: Cobra weaves.' },
         { name: 'Rotations B: Swap Stations', duration: '25 min', desc: 'Groups switch stations and start new activity.' },
-        { name: 'Active Game: Dodgeball', duration: '15 min', desc: 'Compass points dodgeball to burn off energy.' },
         { name: 'Closing & Announcements', duration: '10 min', desc: 'Hand out badges, lower flag, parent dismissal.' }
       ];
 
@@ -204,9 +151,7 @@
         if (currentActivityIndex < liveSchedule.length - 1) {
           setCurrentActivityIndex(prev => prev + 1);
           setRotationAlert(true);
-          // Try haptic vibration on supported mobile devices
           if (navigator.vibrate) { navigator.vibrate([300, 100, 300, 100, 600]); }
-          // Auto-hide the flash alert after 4 seconds
           setTimeout(() => setRotationAlert(false), 4000);
         }
       };
@@ -218,28 +163,21 @@
         setTimeout(() => { setHelpModalOpen(false); setHelpSentMessage(null); }, 2000);
       };
 
-      // -------------------------------------------------------------
-      // 5. BADGES & ADMIN FILTER STATE
-      // -------------------------------------------------------------
+      // 5. BADGES STATE
       const [scouterAdminMode, setScouterAdminMode] = useState(false);
       const [allBadges, setAllBadges] = useState([
         { id: 'b1', name: 'Camping OAS', category: 'Outdoor Adventure', votes: 15, enabled: true },
         { id: 'b2', name: 'Trail Skills OAS', category: 'Outdoor Adventure', votes: 12, enabled: true },
-        { id: 'b3', name: 'Emergency Skills OAS', category: 'Outdoor Adventure', votes: 9, enabled: true },
         { id: 'b6', name: 'Space Explorer', category: 'Personal Achievement', votes: 11, enabled: true }
       ]);
       const toggleBadgeEnabled = (id) => { setAllBadges(prev => prev.map(b => b.id === id ? { ...b, enabled: !b.enabled } : b)); };
       const handleYouthVote = (id) => { setAllBadges(prev => prev.map(b => b.id === id ? { ...b, votes: b.votes + 1 } : b)); };
 
-      // -------------------------------------------------------------
-      // 6. PARENT LOGISTICS SURVEY STATE
-      // -------------------------------------------------------------
+      // 6. PARENT LOGISTICS STATE
       const [parentSurvey, setParentSurvey] = useState({ maxDriveMinutes: 60, canCarpool: 'Yes, 3 extra seats', volunteeredTasks: [] });
       const parentTaskOptions = ['🔥 Fill Propane Tanks', '🛒 Pick up Craft Supplies', '🍕 Snack Prep', '🧹 Hall Cleanup'];
       const toggleParentTask = (task) => {
-        setParentSurvey(prev => ({
-          ...prev, volunteeredTasks: prev.volunteeredTasks.includes(task) ? prev.volunteeredTasks.filter(t => t !== task) : [...prev.volunteeredTasks, task]
-        }));
+        setParentSurvey(prev => ({ ...prev, volunteeredTasks: prev.volunteeredTasks.includes(task) ? prev.volunteeredTasks.filter(t => t !== task) : [...prev.volunteeredTasks, task] }));
       };
 
       const handleApproveOrder = () => { if (!orderApproved) { setBudget(prev => ({ ...prev, crafts: prev.crafts - 15.49 })); setOrderApproved(true); } };
@@ -263,7 +201,7 @@
             </span>
           </header>
 
-          <main className="flex-1 p-4 space-y-4 overflow-y-auto no-scrollbar">
+          <main className="flex-1 p-4 space-y-4 overflow-y-auto no-scrollbar pb-24">
 
             {/* TAB 1: ATTENDANCE */}
             {activeTab === 'attendance' && (
@@ -307,33 +245,56 @@
               </div>
             )}
 
-            {/* TAB 2: PLANNER */}
+            {/* TAB 2: UNREAL AI PLANNER */}
             {activeTab === 'planner' && (
               <div className="space-y-4">
-                <div className="bg-slate-800 border border-emerald-800/80 rounded-xl p-4 space-y-3">
-                  <div className="flex justify-between items-center border-b border-slate-700 pb-2">
+                
+                {/* Simulated Gemini Engine UI */}
+                <div className={`bg-gradient-to-br from-slate-900 to-emerald-950 border rounded-2xl p-5 space-y-4 shadow-2xl relative overflow-hidden transition-all duration-500 ${isAIPlanning ? 'border-emerald-400 ai-glow' : 'border-emerald-800'}`}>
+                  <div className="absolute top-0 right-0 p-3 opacity-20 text-6xl">✨</div>
+                  <div className="flex justify-between items-center relative z-10">
                     <div>
-                      <h2 className="font-bold text-emerald-400 text-sm flex items-center gap-1.5"><span>📍</span> Property Planner (75 Oriole Pkwy)</h2>
-                      <p className="text-[10px] text-slate-400">Weather-aware zone picker for Elmira hall & grounds</p>
-                    </div>
-                    <span className="text-[10px] font-mono bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded">Gemini AI</span>
-                  </div>
-                  <div className="space-y-2 text-xs">
-                    <label className="text-slate-300 block">Select Active Property Zone:</label>
-                    <select value={propertyZone} onChange={(e) => setPropertyZone(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-slate-100 font-bold">
-                      <option value="Outdoor Back Field">Outdoor Back Field</option>
-                      <option value="Outdoor Fire Pit Zone">Outdoor Fire Pit Zone</option>
-                      <option value="Main Gym / Hall">Main Gym / Hall</option>
-                      <option value="Basement Craft Room">Basement Craft Room</option>
-                    </select>
-                    <div className="bg-slate-900 p-2.5 rounded border border-slate-800 text-[11px] text-slate-300 flex justify-between">
-                      <span>Seasonal Rec:</span><strong className="text-amber-400">{propertyZone.includes('Outdoor') ? 'Sept/Oct & May/June' : 'Nov–Mar Cold/Rain'}</strong>
+                      <h2 className="font-bold text-emerald-400 text-lg flex items-center gap-2">
+                        <span>🧠</span> Gemini AI Season Engine
+                      </h2>
+                      <p className="text-[11px] text-emerald-200/70">75 Oriole Pkwy / Weather / Badge Integrator</p>
                     </div>
                   </div>
+
+                  {isAIPlanning ? (
+                    <div className="space-y-3 relative z-10 py-4">
+                      <div className="flex justify-between text-xs text-emerald-300 font-mono">
+                        <span>{Math.floor((aiStep / aiStatusMessages.length) * 100)}% Complete</span>
+                        <span className="animate-pulse">Processing...</span>
+                      </div>
+                      <div className="w-full bg-slate-900 rounded-full h-2">
+                        <div className="bg-emerald-400 h-2 rounded-full transition-all duration-300" style={{ width: `${(aiStep / aiStatusMessages.length) * 100}%` }}></div>
+                      </div>
+                      <p className="text-[11px] text-emerald-100 font-mono text-center h-8 flex items-center justify-center">
+                        {aiStatusMessages[aiStep]}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 relative z-10">
+                      <div className="space-y-2 text-xs">
+                        <label className="text-slate-300 block">Override Target Property Zone:</label>
+                        <select value={propertyZone} onChange={(e) => setPropertyZone(e.target.value)} className="w-full bg-slate-900/50 border border-emerald-700/50 rounded p-2 text-slate-100 font-bold focus:outline-none focus:border-emerald-400">
+                          <option value="Outdoor Back Field">Outdoor Back Field (Auto-Select Sept/Oct)</option>
+                          <option value="Main Gym / Hall">Main Gym / Hall (Auto-Select Nov/Dec)</option>
+                        </select>
+                      </div>
+                      <button 
+                        onClick={triggerAISeasonPlan}
+                        className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black tracking-wide py-3.5 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]"
+                      >
+                        <span>✨</span> GENERATE AI SEASON PLAN
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center"><h3 className="font-bold text-slate-300 text-sm">Weekly Meetings</h3><span className="text-xs text-emerald-400 font-mono">Tap for Signups</span></div>
+                  <div className="flex justify-between items-center"><h3 className="font-bold text-slate-300 text-sm">Automated Meeting Schedules</h3></div>
                   {meetings.map((m) => (
                     <div key={m.id} className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-sm">
                       <div onClick={() => setSelectedMeetingId(selectedMeetingId === m.id ? null : m.id)} className="p-4 cursor-pointer flex justify-between hover:bg-slate-750 transition">
@@ -344,5 +305,4 @@
                           <h4 className="font-bold text-slate-100 text-base">{m.title}</h4>
                           <p className="text-[11px] text-slate-400">📍 {m.location}</p>
                         </div>
-                        <div>
-                         
+                      
