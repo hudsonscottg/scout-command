@@ -12,6 +12,16 @@
     body { -webkit-tap-highlight-color: transparent; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* Fly into Tent Animation */
+    @keyframes flyToTent {
+      0% { transform: translateY(0) scale(1); opacity: 1; }
+      50% { transform: translateY(-70px) scale(0.6) rotate(-6deg); opacity: 0.8; }
+      100% { transform: translateY(-140px) scale(0.1) rotate(12deg); opacity: 0; }
+    }
+    .animate-fly {
+      animation: flyToTent 0.45s ease-in-out forwards;
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans pb-24">
@@ -22,8 +32,8 @@
     const { useState, useEffect } = React;
 
     function ScoutCommandApp() {
-      const [activeTab, setActiveTab] = useState('polls');
-      
+      const [activeTab, setActiveTab] = useState('attendance');
+
       // Feature Flags State
       const [flags, setFlags] = useState({
         autoProcurement: true,
@@ -32,140 +42,172 @@
         betaSync: false
       });
 
-      // Budget State
-      const [budget, setBudget] = useState({
-        crafts: 184.51,
-        outings: 420.00,
-        badges: 110.00
-      });
-
-      // Scouter Availability & Polling State
-      const [tuesdayDates] = useState(['Oct 13', 'Oct 20', 'Oct 27', 'Nov 03']);
-      const [weekendDates] = useState(['Oct 24–25 (Fall Camp)', 'Nov 14–15 (Caving)', 'Dec 05–06 (Winter Camp)']);
-
-      const [myPoll, setMyPoll] = useState({
-        maxWeekendsPerMonth: 1,
-        availableTuesdays: ['Oct 13', 'Oct 27'],
-        availableWeekends: ['Oct 24–25 (Fall Camp)']
-      });
-
-      const [rosterSummary] = useState([
-        { name: 'Akela (You)', tuesdays: ['Oct 13', 'Oct 27'], weekendsCount: 1, availableWeekends: ['Oct 24–25'] },
-        { name: 'Baloo', tuesdays: ['Oct 13', 'Oct 20', 'Oct 27', 'Nov 03'], weekendsCount: 2, availableWeekends: ['Oct 24–25', 'Nov 14–15'] },
-        { name: 'Bagheera', tuesdays: ['Oct 20', 'Nov 03'], weekendsCount: 1, availableWeekends: ['Nov 14–15'] },
-        { name: 'Kaa', tuesdays: ['Oct 13', 'Oct 20', 'Oct 27'], weekendsCount: 1, availableWeekends: ['Dec 05–06'] }
+      // -------------------------------------------------------------
+      // 1. ATTENDANCE STATE (Sorted by Typical Arrival Sequence)
+      // -------------------------------------------------------------
+      const [cubRoster, setCubRoster] = useState([
+        { id: 1, name: 'Benjamin H.', arrivalRank: 1, status: 'absent' },
+        { id: 2, name: 'Brookie H.', arrivalRank: 2, status: 'absent' },
+        { id: 3, name: 'Owen H.', arrivalRank: 3, status: 'absent' },
+        { id: 4, name: 'Rory M.', arrivalRank: 4, status: 'absent' },
+        { id: 5, name: 'Logan K.', arrivalRank: 5, status: 'absent' },
+        { id: 6, name: 'Liam P.', arrivalRank: 6, status: 'absent' },
+        { id: 7, name: 'Charlotte S.', arrivalRank: 7, status: 'absent' },
+        { id: 8, name: 'Noah T.', arrivalRank: 8, status: 'absent' },
+        { id: 9, name: 'Mason R.', arrivalRank: 9, status: 'absent' },
+        { id: 10, name: 'Ava W.', arrivalRank: 10, status: 'absent' }
       ]);
+      const [animatingId, setAnimatingId] = useState(null);
+      const [attendanceHistory, setAttendanceHistory] = useState([]);
 
-      // Procurement Items State
-      const [orderApproved, setOrderApproved] = useState(false);
+      const handleCheckIn = (id) => {
+        setAnimatingId(id);
+        setTimeout(() => {
+          setCubRoster(prev => prev.map(c => c.id === id ? { ...c, status: 'present' } : c));
+          setAttendanceHistory(prev => [...prev, id]);
+          setAnimatingId(null);
+        }, 400);
+      };
 
-      // Youth Voting State
-      const [votes, setVotes] = useState({
-        trailSkills: 8,
-        firstAid: 12,
-        camping: 15,
-        stem: 6
-      });
+      const handleUndoAttendance = () => {
+        if (attendanceHistory.length === 0) return;
+        const lastId = attendanceHistory[attendanceHistory.length - 1];
+        setCubRoster(prev => prev.map(c => c.id === lastId ? { ...c, status: 'absent' } : c));
+        setAttendanceHistory(prev => prev.slice(0, -1));
+      };
 
-      // Live Meeting State
-      const [timerRunning, setTimerRunning] = useState(false);
-      const [secondsLeft, setSecondsLeft] = useState(5400); // 90 min
-      const [rainPivot, setRainPivot] = useState(false);
-      const [showHelpModal, setShowHelpModal] = useState(false);
-
-      // Meetings State
+      // -------------------------------------------------------------
+      // 2. PLANNER & MEETINGS STATE
+      // -------------------------------------------------------------
+      const [selectedMeetingId, setSelectedMeetingId] = useState(null);
       const [meetings, setMeetings] = useState([
         {
           id: 1,
           date: 'Oct 13, 2026',
           title: 'Paracord & Compass Navigation',
-          theme: 'OAS Trail Skills Stage 2 & 3',
-          cost: 15.49,
+          theme: 'Trail Skills OAS Stage 2',
+          actionRequired: true,
+          actionNotice: 'Need Scouter to purchase buckles & prep paracord',
+          scouterCoverageCount: 3,
+          leadScouter: 'Akela (Scott)',
           stations: [
-            { time: '10 min', name: 'Gathering: Blind Knot Relay' },
-            { time: '05 min', name: 'Opening Ceremony & Grand Roar' },
-            { time: '25 min', name: 'Station A: Compass Bearings & Map Grid' },
-            { time: '25 min', name: 'Station B: Paracord Cobra Survival Bracelets' },
-            { time: '15 min', name: 'Active Game: Compass Points Dodgeball' },
-            { time: '10 min', name: 'Closing & Announcements' }
+            { id: 's1', name: 'Station A: Compass Bearings', assignedTo: 'Baloo', needed: true },
+            { id: 's2', name: 'Station B: Paracord Weaving', assignedTo: 'Unassigned', needed: true },
+            { id: 's3', name: 'Gathering Game: Knot Relay', assignedTo: 'Kaa', needed: true }
+          ],
+          actionItems: [
+            { id: 'a1', task: 'Pick up propane tanks', assignedTo: 'Parent Volunteer' },
+            { id: 'a2', task: 'Buy 100ft paracord from Amazon', assignedTo: 'Unassigned' }
+          ]
+        },
+        {
+          id: 2,
+          date: 'Oct 20, 2026',
+          title: 'Campfire Safety & Edible Fires',
+          theme: 'Bushcraft OAS Stage 1',
+          actionRequired: false,
+          actionNotice: 'All supplies & station leads confirmed',
+          scouterCoverageCount: 4,
+          leadScouter: 'Baloo',
+          stations: [
+            { id: 's4', name: 'Station A: Pretzel Fire Building', assignedTo: 'Bagheera', needed: true },
+            { id: 's5', name: 'Station B: Spark Lighting Safety', assignedTo: 'Akela (Scott)', needed: true }
+          ],
+          actionItems: [
+            { id: 'a3', task: 'Bring pretzel sticks & marshmallows', assignedTo: 'Akela (Scott)' }
           ]
         }
       ]);
 
-      // Meeting Generator Form
-      const [genTopic, setGenTopic] = useState('First Aid & Wilderness Safety');
-      const [genDate, setGenDate] = useState('Oct 20, 2026');
-
-      // Timer Logic
-      useEffect(() => {
-        let interval = null;
-        if (timerRunning && secondsLeft > 0) {
-          interval = setInterval(() => setSecondsLeft(prev => prev - 1), 1000);
-        } else {
-          clearInterval(interval);
-        }
-        return () => clearInterval(interval);
-      }, [timerRunning, secondsLeft]);
-
-      const formatTime = (totalSeconds) => {
-        const m = Math.floor(totalSeconds / 60);
-        const s = totalSeconds % 60;
-        return `${m}:${s < 10 ? '0' : ''}${s}`;
+      const handleAssignStation = (meetingId, stationId, scouterName) => {
+        setMeetings(prev => prev.map(m => {
+          if (m.id !== meetingId) return m;
+          return {
+            ...m,
+            stations: m.stations.map(st => st.id === stationId ? { ...st, assignedTo: scouterName } : st)
+          };
+        }));
       };
 
-      const toggleTuesday = (date) => {
-        setMyPoll(prev => {
-          const exists = prev.availableTuesdays.includes(date);
+      const handleClaimTask = (meetingId, taskId, scouterName) => {
+        setMeetings(prev => prev.map(m => {
+          if (m.id !== meetingId) return m;
+          return {
+            ...m,
+            actionItems: m.actionItems.map(a => a.id === taskId ? { ...a, assignedTo: scouterName } : a)
+          };
+        }));
+      };
+
+      // -------------------------------------------------------------
+      // 3. BADGES & YOUTH VOTE STATE (With Scouter Admin Filter)
+      // -------------------------------------------------------------
+      const [scouterAdminMode, setScouterAdminMode] = useState(false);
+      const [allBadges, setAllBadges] = useState([
+        { id: 'b1', name: 'Camping OAS', category: 'Outdoor Adventure', votes: 15, enabled: true },
+        { id: 'b2', name: 'Trail Skills OAS', category: 'Outdoor Adventure', votes: 12, enabled: true },
+        { id: 'b3', name: 'Emergency Skills OAS', category: 'Outdoor Adventure', votes: 9, enabled: true },
+        { id: 'b4', name: 'Aquatics OAS', category: 'Outdoor Adventure', votes: 6, enabled: true },
+        { id: 'b5', name: 'Winter Skills OAS', category: 'Outdoor Adventure', votes: 4, enabled: false },
+        { id: 'b6', name: 'Space Explorer', category: 'Personal Achievement', votes: 11, enabled: true },
+        { id: 'b7', name: 'Wilderness Chef', category: 'Personal Achievement', votes: 14, enabled: true },
+        { id: 'b8', name: 'Builder & Carpenter', category: 'Personal Achievement', votes: 8, enabled: true },
+        { id: 'b9', name: 'Global Citizen', category: 'Personal Achievement', votes: 3, enabled: false }
+      ]);
+
+      const toggleBadgeEnabled = (id) => {
+        setAllBadges(prev => prev.map(b => b.id === id ? { ...b, enabled: !b.enabled } : b));
+      };
+
+      const handleYouthVote = (id) => {
+        setAllBadges(prev => prev.map(b => b.id === id ? { ...b, votes: b.votes + 1 } : b));
+      };
+
+      // -------------------------------------------------------------
+      // 4. PARENT ENGAGEMENT & LOGISTICS STATE
+      // -------------------------------------------------------------
+      const [parentSurvey, setParentSurvey] = useState({
+        maxDriveMinutes: 60,
+        canCarpool: 'Yes, 3 extra seats',
+        volunteeredTasks: []
+      });
+
+      const parentTaskOptions = [
+        '🔥 Fill Propane Tanks for Camp',
+        '🛒 Pick up Meeting Craft Supplies',
+        '🍕 Assist with Meeting Snack Prep',
+        '🧹 Stay 15 mins for Hall Cleanup'
+      ];
+
+      const toggleParentTask = (task) => {
+        setParentSurvey(prev => {
+          const exists = prev.volunteeredTasks.includes(task);
           return {
             ...prev,
-            availableTuesdays: exists 
-              ? prev.availableTuesdays.filter(d => d !== date)
-              : [...prev.availableTuesdays, date]
+            volunteeredTasks: exists 
+              ? prev.volunteeredTasks.filter(t => t !== task)
+              : [...prev.volunteeredTasks, task]
           };
         });
       };
 
-      const toggleWeekend = (date) => {
-        setMyPoll(prev => {
-          const exists = prev.availableWeekends.includes(date);
-          return {
-            ...prev,
-            availableWeekends: exists 
-              ? prev.availableWeekends.filter(d => d !== date)
-              : [...prev.availableWeekends, date]
-          };
-        });
+      // -------------------------------------------------------------
+      // 5. LIVE HELP MODAL (2 Levels: Urgent vs Routine)
+      // -------------------------------------------------------------
+      const [helpModalOpen, setHelpModalOpen] = useState(false);
+      const [helpSentMessage, setHelpSentMessage] = useState(null);
+
+      const triggerHelpAlert = (level) => {
+        setHelpSentMessage(level === 'urgent' ? '🚨 URGENT ALERT: Leaders notified to come immediately!' : '🙋 ROUTINE ALERT: Leaders notified to drop by when free.');
+        setTimeout(() => {
+          setHelpModalOpen(false);
+          setHelpSentMessage(null);
+        }, 2200);
       };
 
-      const handleGenerateMeeting = () => {
-        const newMeeting = {
-          id: Date.now(),
-          date: genDate,
-          title: genTopic,
-          theme: 'Custom Generated AI Agenda',
-          cost: 18.00,
-          stations: [
-            { time: '10 min', name: 'Gathering: Safety Gear Inspection' },
-            { time: '05 min', name: 'Opening Ceremony' },
-            { time: '30 min', name: `Station A: Hands-on ${genTopic} Skills` },
-            { time: '30 min', name: 'Station B: Interactive Team Simulation' },
-            { time: '15 min', name: 'Closing & Badge Credit Logging' }
-          ]
-        };
-        setMeetings([newMeeting, ...meetings]);
-      };
-
-      const handleApproveOrder = () => {
-        if (!orderApproved) {
-          setBudget(prev => ({ ...prev, crafts: prev.crafts - 15.49 }));
-          setOrderApproved(true);
-        }
-      };
-
-      // Calculate Scouter count for a Tuesday
-      const getTuesdayCount = (date) => {
-        return rosterSummary.filter(s => s.tuesdays.includes(date)).length;
-      };
+      // Filtered lists for attendance
+      const absentCubs = cubRoster.filter(c => c.status === 'absent').sort((a,b) => a.arrivalRank - b.arrivalRank);
+      const presentCubs = cubRoster.filter(c => c.status === 'present');
 
       return (
         <div class="max-w-md mx-auto min-h-screen bg-slate-900 shadow-2xl relative flex flex-col">
@@ -180,551 +222,171 @@
               </div>
             </div>
             <span class="bg-emerald-900 text-emerald-200 text-xs px-2.5 py-1 rounded-full border border-emerald-700 font-mono">
-              2026–2027 Season
+              2026–2027
             </span>
           </header>
 
-          {/* Main Content Area */}
+          {/* Main Content Body */}
           <main class="flex-1 p-4 space-y-4 overflow-y-auto no-scrollbar">
 
-            {/* TAB: SCOUTER POLLS & AVAILABILITY */}
-            {activeTab === 'polls' && (
+            {/* ========================================================= */}
+            {/* TAB 1: ATTENDANCE (Fly into Tent Animation) */}
+            {/* ========================================================= */}
+            {activeTab === 'attendance' && (
               <div class="space-y-4">
                 
-                {/* Personal Availability Form */}
-                <div class="bg-slate-800 border border-emerald-800/80 rounded-xl p-4 space-y-4">
-                  <div class="border-b border-slate-700 pb-2">
-                    <h2 class="font-bold text-emerald-400 flex items-center gap-2">
-                      <span>🙋‍♂️</span> Your Availability Poll (Akela)
-                    </h2>
-                    <p class="text-xs text-slate-400">Set your meeting night and camping limits</p>
+                {/* Visual Tent Receiver Box */}
+                <div class="bg-emerald-950 border-2 border-emerald-600 rounded-2xl p-4 text-center relative overflow-hidden shadow-xl">
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="text-xs font-mono text-emerald-400">CHECK-IN STATION</span>
+                    <button 
+                      onClick={handleUndoAttendance}
+                      disabled={attendanceHistory.length === 0}
+                      class={`text-xs px-2.5 py-1 rounded-lg border font-bold flex items-center gap-1 ${attendanceHistory.length > 0 ? 'bg-amber-500 text-slate-950 border-amber-400 shadow' : 'bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed'}`}
+                    >
+                      ↩️ Undo Last
+                    </button>
                   </div>
 
-                  {/* Tuesday Night Poll */}
-                  <div class="space-y-2">
-                    <label class="text-xs font-bold text-amber-400 block">1. Available Tuesday Nights</label>
-                    <div class="grid grid-cols-2 gap-2">
-                      {tuesdayDates.map((date) => {
-                        const isSelected = myPoll.availableTuesdays.includes(date);
-                        return (
-                          <button
-                            key={date}
-                            onClick={() => toggleTuesday(date)}
-                            class={`p-2.5 rounded-lg border text-xs font-bold flex items-center justify-between transition ${isSelected ? 'bg-emerald-950 border-emerald-500 text-emerald-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}
-                          >
-                            <span>{date}</span>
-                            <span>{isSelected ? '✓' : '+'}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+                  <div class="text-5xl my-2">🏕️</div>
+                  <h3 class="font-bold text-amber-400 text-base">Present in the Tent ({presentCubs.length} / {cubRoster.length})</h3>
 
-                  {/* Weekend Cap Selector */}
-                  <div class="space-y-2">
-                    <label class="text-xs font-bold text-amber-400 block">2. Maximum Weekend Camps Limit</label>
-                    <div class="flex items-center justify-between bg-slate-900 p-3 rounded-lg border border-slate-700">
-                      <span class="text-xs text-slate-300">Max Camps / Month:</span>
-                      <div class="flex items-center space-x-3">
-                        <button 
-                          onClick={() => setMyPoll(p => ({ ...p, maxWeekendsPerMonth: Math.max(0, p.maxWeekendsPerMonth - 1) }))}
-                          class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 font-bold"
-                        >
-                          -
-                        </button>
-                        <span class="font-mono text-emerald-400 font-bold">{myPoll.maxWeekendsPerMonth}</span>
-                        <button 
-                          onClick={() => setMyPoll(p => ({ ...p, maxWeekendsPerMonth: p.maxWeekendsPerMonth + 1 }))}
-                          class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 font-bold"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Weekend Camp Dates Poll */}
-                  <div class="space-y-2">
-                    <label class="text-xs font-bold text-amber-400 block">3. Weekend Camp Dates Available</label>
-                    <div class="space-y-1.5">
-                      {weekendDates.map((wknd) => {
-                        const isSelected = myPoll.availableWeekends.includes(wknd);
-                        return (
-                          <button
-                            key={wknd}
-                            onClick={() => toggleWeekend(wknd)}
-                            class={`w-full p-2.5 rounded-lg border text-xs font-bold flex items-center justify-between transition ${isSelected ? 'bg-emerald-950 border-emerald-500 text-emerald-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}
-                          >
-                            <span>{wknd}</span>
-                            <span>{isSelected ? '✓ Available' : 'Unavailable'}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                  {/* Present Cubs Badges */}
+                  <div class="flex flex-wrap justify-center gap-1.5 mt-3 max-h-28 overflow-y-auto no-scrollbar">
+                    {presentCubs.length === 0 ? (
+                      <span class="text-xs text-emerald-500 italic">No Cubs checked in yet...</span>
+                    ) : (
+                      presentCubs.map(c => (
+                        <span key={c.id} class="bg-emerald-800 border border-emerald-600 text-emerald-100 text-xs px-2.5 py-1 rounded-full font-bold shadow-sm">
+                          ✓ {c.name}
+                        </span>
+                      ))
+                    )}
                   </div>
                 </div>
 
-                {/* Section Leader Coverage Matrix */}
-                <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
-                  <h3 class="font-bold text-slate-200 text-xs flex items-center gap-2">
-                    <span>📊</span> Pack Tuesday Coverage Matrix
-                  </h3>
-                  
-                  <div class="space-y-2">
-                    {tuesdayDates.map((date) => {
-                      const count = getTuesdayCount(date);
-                      const isLow = count < 2;
-                      return (
-                        <div key={date} class="bg-slate-900 p-2.5 rounded-lg border border-slate-800 flex items-center justify-between text-xs">
-                          <div>
-                            <span class="font-bold text-slate-200">{date}</span>
-                            <p class="text-[10px] text-slate-400">{count} Scouters Confirmed</p>
-                          </div>
-                          {isLow ? (
-                            <span class="bg-rose-950 text-rose-300 border border-rose-800 px-2 py-0.5 rounded text-[10px] font-bold">
-                              ⚠️ RATIO RISK (&lt;2)
-                            </span>
-                          ) : (
-                            <span class="bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded text-[10px]">
-                              ✓ Covered ({count})
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
+                {/* Arriving Cubs List (Sorted by Arrival Rank) */}
+                <div class="space-y-2">
+                  <div class="flex justify-between items-center">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tap to Check In (Sorted by Typical Arrival)</h4>
+                    <span class="text-[10px] text-slate-500 font-mono">{absentCubs.length} Remaining</span>
                   </div>
+
+                  {absentCubs.length === 0 ? (
+                    <div class="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center text-emerald-400 font-bold text-sm">
+                      🎉 All Cubs have arrived and are in the tent!
+                    </div>
+                  ) : (
+                    <div class="space-y-2">
+                      {absentCubs.map((cub) => {
+                        const isAnimating = animatingId === cub.id;
+                        return (
+                          <button
+                            key={cub.id}
+                            onClick={() => handleCheckIn(cub.id)}
+                            class={`w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 p-3.5 rounded-xl text-left flex items-center justify-between transition-all duration-300 shadow-sm ${isAnimating ? 'animate-fly border-emerald-400 bg-emerald-900/80' : ''}`}
+                          >
+                            <div class="flex items-center space-x-3">
+                              <span class="w-6 h-6 rounded-full bg-slate-900 border border-slate-700 text-amber-400 font-mono text-xs flex items-center justify-center font-bold">
+                                #{cub.arrivalRank}
+                              </span>
+                              <span class="font-bold text-slate-100 text-sm">{cub.name}</span>
+                            </div>
+                            <span class="text-xs bg-emerald-950 text-emerald-300 border border-emerald-800 px-3 py-1 rounded-lg font-bold">
+                              Touch to Arrive ⛺
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
               </div>
             )}
 
-            {/* TAB: PLANNER */}
+            {/* ========================================================= */}
+            {/* TAB 2: PLANNER (Clean Overview & Detailed Modal) */}
+            {/* ========================================================= */}
             {activeTab === 'planner' && (
               <div class="space-y-4">
                 
-                {/* Budget Envelopes Summary */}
-                <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
-                  <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-                    <h2 class="font-bold text-amber-400 flex items-center gap-2">
-                      <span>💰</span> Seasonal Budget Envelopes
-                    </h2>
-                    <span class="text-xs text-slate-400">Total Income Allocation</span>
-                  </div>
-                  
-                  <div class="space-y-2">
-                    <div>
-                      <div class="flex justify-between text-xs mb-1">
-                        <span class="text-slate-300">🎨 Crafts & Meeting Supplies</span>
-                        <span class="font-mono text-emerald-400">${budget.crafts.toFixed(2)} / $500.00</span>
-                      </div>
-                      <div class="w-full bg-slate-900 rounded-full h-2 overflow-hidden">
-                        <div class="bg-emerald-500 h-2 rounded-full" style={{ width: `${(budget.crafts / 500) * 100}%` }}></div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div class="flex justify-between text-xs mb-1">
-                        <span class="text-slate-300">🏕️ Outings & Campsite Rentals</span>
-                        <span class="font-mono text-emerald-400">${budget.outings.toFixed(2)} / $600.00</span>
-                      </div>
-                      <div class="w-full bg-slate-900 rounded-full h-2 overflow-hidden">
-                        <div class="bg-emerald-500 h-2 rounded-full" style={{ width: `${(budget.outings / 600) * 100}%` }}></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* AI Agenda Generator Tool */}
-                <div class="bg-slate-800 border border-emerald-800/60 rounded-xl p-4 space-y-3">
-                  <h2 class="font-bold text-emerald-400 flex items-center gap-2">
-                    <span>✨</span> AI Meeting Builder
-                  </h2>
-                  <div class="space-y-2">
-                    <div>
-                      <label class="text-xs text-slate-400 block mb-1">Target Topic / Badge</label>
-                      <input 
-                        type="text" 
-                        value={genTopic}
-                        onChange={(e) => setGenTopic(e.target.value)}
-                        class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-amber-400"
-                      />
-                    </div>
-                    <div>
-                      <label class="text-xs text-slate-400 block mb-1">Meeting Date</label>
-                      <input 
-                        type="text" 
-                        value={genDate}
-                        onChange={(e) => setGenDate(e.target.value)}
-                        class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-100 focus:outline-none focus:border-amber-400"
-                      />
-                    </div>
-                    <button 
-                      onClick={handleGenerateMeeting}
-                      class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2.5 rounded-lg text-sm transition shadow-lg flex items-center justify-center gap-2"
-                    >
-                      <span>⚡</span> Generate Complete Agenda
-                    </button>
-                  </div>
-                </div>
-
-                {/* Scheduled Meetings List */}
+                {/* Weekly Meeting Summaries */}
                 <div class="space-y-3">
-                  <h3 class="font-bold text-slate-300 text-sm">Scheduled Season Agendas ({meetings.length})</h3>
-                  
+                  <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-slate-300 text-sm">Seasonal Weekly Program</h3>
+                    <span class="text-xs text-emerald-400 font-mono">Tap for Full Breakdown & Signups</span>
+                  </div>
+
                   {meetings.map((m) => (
-                    <div key={m.id} class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
-                      <div class="flex justify-between items-start">
-                        <div>
-                          <span class="text-xs font-mono text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800">
-                            {m.date}
-                          </span>
-                          <h4 class="font-bold text-slate-100 mt-1">{m.title}</h4>
+                    <div key={m.id} class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-sm">
+                      <div 
+                        onClick={() => setSelectedMeetingId(selectedMeetingId === m.id ? null : m.id)}
+                        class="p-4 cursor-pointer flex items-center justify-between hover:bg-slate-750 transition"
+                      >
+                        <div class="space-y-1">
+                          <div class="flex items-center gap-2">
+                            <span class="text-xs font-mono text-amber-400 bg-amber-950 px-2 py-0.5 rounded border border-amber-800">
+                              {m.date}
+                            </span>
+                            <span class="text-xs text-slate-400">({m.scouterCoverageCount} Scouters Available)</span>
+                          </div>
+                          <h4 class="font-bold text-slate-100 text-base">{m.title}</h4>
                           <p class="text-xs text-emerald-400">{m.theme}</p>
                         </div>
-                        <span class="text-xs font-mono text-slate-400 bg-slate-900 px-2 py-1 rounded">
-                          Est: ${m.cost.toFixed(2)}
-                        </span>
+
+                        {/* Clean Status Indicator */}
+                        <div class="text-right">
+                          {m.actionRequired ? (
+                            <span class="inline-flex items-center gap-1 bg-rose-950 text-rose-300 border border-rose-800 text-xs px-2.5 py-1 rounded-full font-bold">
+                              ⚠️ Action Needed
+                            </span>
+                          ) : (
+                            <span class="inline-flex items-center gap-1 bg-emerald-950 text-emerald-300 border border-emerald-800 text-xs px-2.5 py-1 rounded-full font-bold">
+                              ✓ Ready
+                            </span>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Station Breakdown */}
-                      <div class="bg-slate-900/80 rounded-lg p-2.5 space-y-1.5 text-xs border border-slate-800">
-                        {m.stations.map((st, i) => (
-                          <div key={i} class="flex items-center justify-between text-slate-300">
-                            <span>• {st.name}</span>
-                            <span class="text-slate-500 font-mono">{st.time}</span>
+                      {/* Expanded Meeting Details View */}
+                      {selectedMeetingId === m.id && (
+                        <div class="bg-slate-900 p-4 border-t border-slate-700 space-y-4 text-xs">
+                          
+                          {/* Notice Banner */}
+                          <div class={`p-2.5 rounded-lg border ${m.actionRequired ? 'bg-rose-950/60 border-rose-800 text-rose-200' : 'bg-emerald-950/60 border-emerald-800 text-emerald-200'}`}>
+                            <strong>Status Note:</strong> {m.actionNotice}
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
 
-              </div>
-            )}
+                          {/* Scouter Station Signups */}
+                          <div class="space-y-2">
+                            <h5 class="font-bold text-amber-400 text-xs uppercase tracking-wider">Scouter Activity Station Leads</h5>
+                            {m.stations.map((st) => (
+                              <div key={st.id} class="bg-slate-800 p-2.5 rounded-lg border border-slate-700 flex items-center justify-between">
+                                <span class="font-bold text-slate-200">{st.name}</span>
+                                <div class="flex items-center gap-2">
+                                  <span class={`font-mono text-[11px] ${st.assignedTo === 'Unassigned' ? 'text-amber-400 font-bold' : 'text-emerald-300'}`}>
+                                    {st.assignedTo}
+                                  </span>
+                                  {st.assignedTo === 'Unassigned' && (
+                                    <button 
+                                      onClick={() => handleAssignStation(m.id, st.id, 'Akela (Scott)')}
+                                      class="bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-1 rounded text-[10px] font-bold"
+                                    >
+                                      Sign Up
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
 
-            {/* TAB: LIVE MEETING */}
-            {activeTab === 'live' && (
-              <div class="space-y-4">
-                
-                {/* Emergency Scouter Help Button */}
-                <button 
-                  onClick={() => setShowHelpModal(true)}
-                  class="w-full bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 border border-rose-500 animate-pulse"
-                >
-                  <span>🚨</span> CALL SCOUTER FOR HELP
-                </button>
-
-                {/* Master Timer Box */}
-                <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 text-center space-y-3">
-                  <div class="flex justify-between items-center text-xs text-slate-400">
-                    <span>Meeting Status: ACTIVE</span>
-                    <span>Target: 90 Mins</span>
-                  </div>
-                  <div class="text-5xl font-mono font-bold text-amber-400 tracking-wider">
-                    {formatTime(secondsLeft)}
-                  </div>
-                  <div class="flex gap-2">
-                    <button 
-                      onClick={() => setTimerRunning(!timerRunning)}
-                      class={`flex-1 py-2 rounded-lg font-bold text-sm ${timerRunning ? 'bg-amber-500 text-slate-950' : 'bg-emerald-600 text-white'}`}
-                    >
-                      {timerRunning ? 'PAUSE TIMER' : 'START TIMER'}
-                    </button>
-                    <button 
-                      onClick={() => { setTimerRunning(false); setSecondsLeft(5400); }}
-                      class="px-4 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg text-sm font-bold"
-                    >
-                      RESET
-                    </button>
-                  </div>
-                </div>
-
-                {/* Rain / Indoor Pivot Toggle */}
-                {flags.weatherPivot && (
-                  <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 flex items-center justify-between">
-                    <div>
-                      <h4 class="font-bold text-xs text-slate-200">Rain / Indoor Pivot Toggle</h4>
-                      <p class="text-xs text-slate-400">Swap outdoor stations for indoor games</p>
-                    </div>
-                    <button 
-                      onClick={() => setRainPivot(!rainPivot)}
-                      class={`px-3 py-1.5 rounded-lg font-bold text-xs ${rainPivot ? 'bg-cyan-600 text-white' : 'bg-slate-700 text-slate-400'}`}
-                    >
-                      {rainPivot ? 'INDOOR ACTIVE' : 'OUTDOOR'}
-                    </button>
-                  </div>
-                )}
-
-                {/* Live Station Step Cards */}
-                <div class="space-y-2">
-                  <h3 class="font-bold text-slate-300 text-sm">Active Station Rotations</h3>
-                  
-                  <div class="bg-emerald-950/60 border border-emerald-700 rounded-xl p-3 space-y-1">
-                    <div class="flex justify-between text-xs font-bold text-emerald-400">
-                      <span>CURRENT STATION (25 Min)</span>
-                      <span>Station A</span>
-                    </div>
-                    <h4 class="font-bold text-slate-100">
-                      {rainPivot ? 'Indoor Navigation & Compass Grid Game' : 'Outdoor Compass Bearings & Trail Cards'}
-                    </h4>
-                    <p class="text-xs text-slate-300">Guide Cubs in teams of 4 using sighting compasses to locate hidden markers.</p>
-                  </div>
-
-                  <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-3 space-y-1">
-                    <div class="flex justify-between text-xs font-bold text-slate-400">
-                      <span>NEXT ROTATION (25 Min)</span>
-                      <span>Station B</span>
-                    </div>
-                    <h4 class="font-bold text-slate-300">Paracord Cobra Survival Bracelets</h4>
-                    <p class="text-xs text-slate-400">Scouters hand out 10ft precut paracord strands and buckles.</p>
-                  </div>
-                </div>
-
-              </div>
-            )}
-
-            {/* TAB: PROCUREMENT */}
-            {activeTab === 'procurement' && (
-              <div class="space-y-4">
-                <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
-                  <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-                    <h2 class="font-bold text-amber-400 flex items-center gap-2">
-                      <span>🛒</span> Amazon Smart Order Prompt
-                    </h2>
-                    <span class="text-xs bg-amber-950 text-amber-300 border border-amber-800 px-2 py-0.5 rounded">
-                      Needs Approval
-                    </span>
-                  </div>
-
-                  <div class="space-y-2 text-xs">
-                    <p class="text-slate-300">Required for <strong class="text-slate-100">Oct 13 Meeting (Paracord Bracelets)</strong>:</p>
-                    <ul class="space-y-1 bg-slate-900 p-2.5 rounded border border-slate-800 font-mono text-slate-300">
-                      <li class="flex justify-between">
-                        <span>• 100ft Olive 550 Paracord</span>
-                        <span>$8.99</span>
-                      </li>
-                      <li class="flex justify-between">
-                        <span>• 30-Pack 3/8" Plastic Buckles</span>
-                        <span>$6.50</span>
-                      </li>
-                      <li class="flex justify-between font-bold border-t border-slate-700 pt-1 text-emerald-400">
-                        <span>Total (Lowest Price Checked):</span>
-                        <span>$15.49</span>
-                      </li>
-                    </ul>
-
-                    <div class="bg-slate-900 p-2 rounded text-slate-400 flex justify-between items-center">
-                      <span>Remaining Crafts Budget:</span>
-                      <span class="font-mono text-emerald-400">${budget.crafts.toFixed(2)}</span>
-                    </div>
-                  </div>
-
-                  <button 
-                    onClick={handleApproveOrder}
-                    disabled={orderApproved}
-                    class={`w-full py-3 rounded-lg font-bold text-sm shadow-lg flex items-center justify-center gap-2 ${orderApproved ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-500 text-white'}`}
-                  >
-                    <span>{orderApproved ? '✓ ORDER APPROVED & SHIPPED' : 'APPROVE & ORDER TO HOUSE ($15.49)'}</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* TAB: YOUTH VOTE */}
-            {activeTab === 'youth' && (
-              <div class="space-y-4">
-                <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
-                  <h2 class="font-bold text-amber-400 flex items-center gap-2">
-                    <span>🗳️</span> Youth Badge Priority Voting
-                  </h2>
-                  <p class="text-xs text-slate-300">Cubs tap their favorite badges to vote for upcoming seasonal focus areas:</p>
-
-                  <div class="grid grid-cols-2 gap-2 pt-1">
-                    <button 
-                      onClick={() => setVotes(v => ({ ...v, camping: v.camping + 1 }))}
-                      class="bg-slate-900 hover:bg-slate-800 border border-slate-700 p-3 rounded-xl text-left space-y-1"
-                    >
-                      <span class="text-xl">🏕️</span>
-                      <h4 class="font-bold text-xs text-slate-100">Camping Skills</h4>
-                      <p class="text-xs text-emerald-400 font-mono">{votes.camping} Votes</p>
-                    </button>
-
-                    <button 
-                      onClick={() => setVotes(v => ({ ...v, firstAid: v.firstAid + 1 }))}
-                      class="bg-slate-900 hover:bg-slate-800 border border-slate-700 p-3 rounded-xl text-left space-y-1"
-                    >
-                      <span class="text-xl">🩹</span>
-                      <h4 class="font-bold text-xs text-slate-100">First Aid</h4>
-                      <p class="text-xs text-emerald-400 font-mono">{votes.firstAid} Votes</p>
-                    </button>
-
-                    <button 
-                      onClick={() => setVotes(v => ({ ...v, trailSkills: v.trailSkills + 1 }))}
-                      class="bg-slate-900 hover:bg-slate-800 border border-slate-700 p-3 rounded-xl text-left space-y-1"
-                    >
-                      <span class="text-xl">🧭</span>
-                      <h4 class="font-bold text-xs text-slate-100">Trail Skills</h4>
-                      <p class="text-xs text-emerald-400 font-mono">{votes.trailSkills} Votes</p>
-                    </button>
-
-                    <button 
-                      onClick={() => setVotes(v => ({ ...v, stem: v.stem + 1 }))}
-                      class="bg-slate-900 hover:bg-slate-800 border border-slate-700 p-3 rounded-xl text-left space-y-1"
-                    >
-                      <span class="text-xl">🚀</span>
-                      <h4 class="font-bold text-xs text-slate-100">STEM Rockets</h4>
-                      <p class="text-xs text-emerald-400 font-mono">{votes.stem} Votes</p>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TAB: SETTINGS & FEATURE FLAGS */}
-            {activeTab === 'settings' && (
-              <div class="space-y-4">
-                <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
-                  <h2 class="font-bold text-amber-400 flex items-center gap-2">
-                    <span>⚙️</span> Feature Flags & Beta Cohorts
-                  </h2>
-                  <p class="text-xs text-slate-400">Toggle experimental modules on or off across section devices:</p>
-
-                  <div class="space-y-3 pt-2">
-                    <div class="flex items-center justify-between border-b border-slate-700 pb-2">
-                      <div>
-                        <h4 class="font-bold text-xs text-slate-200">Auto-Procurement Engine</h4>
-                        <p class="text-xs text-slate-400">Lowest-price Amazon supply prompts</p>
-                      </div>
-                      <input 
-                        type="checkbox" 
-                        checked={flags.autoProcurement} 
-                        onChange={(e) => setFlags({ ...flags, autoProcurement: e.target.checked })}
-                        class="w-5 h-5 accent-emerald-500 rounded"
-                      />
-                    </div>
-
-                    <div class="flex items-center justify-between border-b border-slate-700 pb-2">
-                      <div>
-                        <h4 class="font-bold text-xs text-slate-200">Youth Voting Portal</h4>
-                        <p class="text-xs text-slate-400">Enable tablet voting for badge priority</p>
-                      </div>
-                      <input 
-                        type="checkbox" 
-                        checked={flags.youthVote} 
-                        onChange={(e) => setFlags({ ...flags, youthVote: e.target.checked })}
-                        class="w-5 h-5 accent-emerald-500 rounded"
-                      />
-                    </div>
-
-                    <div class="flex items-center justify-between border-b border-slate-700 pb-2">
-                      <div>
-                        <h4 class="font-bold text-xs text-slate-200">Weather Pivot Alerts</h4>
-                        <p class="text-xs text-slate-400">Indoor/outdoor dynamic station swap</p>
-                      </div>
-                      <input 
-                        type="checkbox" 
-                        checked={flags.weatherPivot} 
-                        onChange={(e) => setFlags({ ...flags, weatherPivot: e.target.checked })}
-                        class="w-5 h-5 accent-emerald-500 rounded"
-                      />
-                    </div>
-
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <h4 class="font-bold text-xs text-slate-200">Beta: Real-Time Timer Sync</h4>
-                        <p class="text-xs text-slate-400">Synchronize clocks across Scouters</p>
-                      </div>
-                      <input 
-                        type="checkbox" 
-                        checked={flags.betaSync} 
-                        onChange={(e) => setFlags({ ...flags, betaSync: e.target.checked })}
-                        class="w-5 h-5 accent-emerald-500 rounded"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-          </main>
-
-          {/* Emergency Modal */}
-          {showHelpModal && (
-            <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div class="bg-slate-800 border-2 border-rose-600 rounded-2xl p-5 max-w-sm w-full space-y-4 text-center">
-                <span class="text-4xl">🚨</span>
-                <h3 class="font-bold text-lg text-rose-400">Scouter Assistance Alert</h3>
-                <p class="text-xs text-slate-300">Sending high-priority push alert to all floor Scouters' mobile devices...</p>
-                <button 
-                  onClick={() => setShowHelpModal(false)}
-                  class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-sm"
-                >
-                  DISMISS ALERT
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Bottom Navigation Bar */}
-          <nav class="bg-slate-950 border-t border-slate-800 fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40 flex justify-around p-2">
-            <button 
-              onClick={() => setActiveTab('polls')}
-              class={`flex flex-col items-center py-1 px-2 rounded-lg ${activeTab === 'polls' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}
-            >
-              <span class="text-lg">🙋‍♂️</span>
-              <span class="text-[10px]">Polls</span>
-            </button>
-
-            <button 
-              onClick={() => setActiveTab('planner')}
-              class={`flex flex-col items-center py-1 px-2 rounded-lg ${activeTab === 'planner' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}
-            >
-              <span class="text-lg">📅</span>
-              <span class="text-[10px]">Planner</span>
-            </button>
-
-            <button 
-              onClick={() => setActiveTab('live')}
-              class={`flex flex-col items-center py-1 px-2 rounded-lg ${activeTab === 'live' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}
-            >
-              <span class="text-lg">⏱️</span>
-              <span class="text-[10px]">Live</span>
-            </button>
-
-            {flags.autoProcurement && (
-              <button 
-                onClick={() => setActiveTab('procurement')}
-                class={`flex flex-col items-center py-1 px-2 rounded-lg ${activeTab === 'procurement' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}
-              >
-                <span class="text-lg">🛒</span>
-                <span class="text-[10px]">Buy</span>
-              </button>
-            )}
-
-            {flags.youthVote && (
-              <button 
-                onClick={() => setActiveTab('youth')}
-                class={`flex flex-col items-center py-1 px-2 rounded-lg ${activeTab === 'youth' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}
-              >
-                <span class="text-lg">🗳️</span>
-                <span class="text-[10px]">Vote</span>
-              </button>
-            )}
-
-            <button 
-              onClick={() => setActiveTab('settings')}
-              class={`flex flex-col items-center py-1 px-2 rounded-lg ${activeTab === 'settings' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}
-            >
-              <span class="text-lg">⚙️</span>
-              <span class="text-[10px]">Flags</span>
-            </button>
-          </nav>
-
-        </div>
-      );
-    }
-
-    ReactDOM.createRoot(document.getElementById('root')).render(<ScoutCommandApp />);
-  </script>
-</body>
-</html>
+                          {/* Scouter Action Items */}
+                          <div class="space-y-2 pt-1">
+                            <h5 class="font-bold text-amber-400 text-xs uppercase tracking-wider">Action Items & Prep Tasks</h5>
+                            {m.actionItems.map((act) => (
+                              <div key={act.id} class="bg-slate-800 p-2.5 rounded-lg border border-slate-700 flex items-center justify-between">
+                                <span class="text-slate-300">{act.task}</span>
+                                <div class="flex items-center gap-2">
+                                  <span class={`font-mono text-[11px] ${act.assignedTo === 'Unassigned' ? 'text-rose-400 font-bold' : 'text-slate-400'}`}>
+      
