@@ -1,303 +1,1136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ScoutCommand - Lightning Edition</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Alpine.js (15kb, Zero Compilation, Instant Load) -->
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-  <style>
-    body { -webkit-tap-highlight-color: transparent; }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    
-    @keyframes flyToTent {
-      0% { transform: translateY(0) scale(1); opacity: 1; }
-      50% { transform: translateY(-70px) scale(0.6) rotate(-6deg); opacity: 0.8; }
-      100% { transform: translateY(-140px) scale(0.1) rotate(12deg); opacity: 0; }
-    }
-    .animate-fly { animation: flyToTent 0.45s ease-in-out forwards; }
-    
-    @keyframes sirenFlash {
-      0%, 100% { background-color: #f59e0b; }
-      50% { background-color: #d97706; transform: scale(1.02); }
-    }
-    .animate-siren { animation: sirenFlash 0.8s infinite; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020617">
+<title>ScoutCommand — Lightning Edition</title>
 
-    @keyframes pulseGlow {
-      0%, 100% { box-shadow: 0 0 15px #34d399, inset 0 0 10px #34d399; }
-      50% { box-shadow: 0 0 35px #10b981, inset 0 0 25px #10b981; }
-    }
-    .ai-glow { animation: pulseGlow 1.5s infinite; }
+<style>
+/* =========================================================
+   SCOUTCOMMAND — LIGHTWEIGHT UI ENGINE
+   No Tailwind. No Alpine. No external dependencies.
+   ========================================================= */
 
-    @keyframes radarScan {
-      0% { transform: translateY(-100%); opacity: 0; }
-      50% { opacity: 1; }
-      100% { transform: translateY(100%); opacity: 0; }
-    }
-    .animate-scan { animation: radarScan 2s linear infinite; }
-    [x-cloak] { display: none !important; }
-  </style>
+:root{
+  --bg:#020617;
+  --panel:#0f172a;
+  --panel2:#1e293b;
+  --panel3:#0b1220;
+  --border:#334155;
+  --green:#10b981;
+  --green2:#34d399;
+  --green-dark:#064e3b;
+  --amber:#f59e0b;
+  --amber2:#fbbf24;
+  --red:#f43f5e;
+  --text:#f8fafc;
+  --muted:#94a3b8;
+  --dim:#64748b;
+  --radius:14px;
+}
+
+*{
+  box-sizing:border-box;
+}
+
+html{
+  background:var(--bg);
+  color-scheme:dark;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+  background:var(--bg);
+  color:var(--text);
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  -webkit-tap-highlight-color:transparent;
+  padding-bottom:80px;
+}
+
+button,
+select{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+}
+
+button:disabled{
+  cursor:not-allowed;
+}
+
+.hidden{
+  display:none!important;
+}
+
+.no-scrollbar{
+  scrollbar-width:none;
+}
+
+.no-scrollbar::-webkit-scrollbar{
+  display:none;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.header{
+  position:sticky;
+  top:0;
+  z-index:30;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 16px;
+  background:#022c22;
+  border-bottom:1px solid #065f46;
+  box-shadow:0 4px 12px rgba(0,0,0,.25);
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+
+.brand-icon{
+  font-size:24px;
+}
+
+.brand-title{
+  margin:0;
+  color:var(--amber2);
+  font-size:17px;
+  font-weight:800;
+  line-height:1;
+}
+
+.brand-sub{
+  margin-top:4px;
+  color:#6ee7b7;
+  font-size:9px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+
+.role{
+  padding:5px 9px;
+  border:1px solid #047857;
+  border-radius:999px;
+  background:#064e3b;
+  color:#a7f3d0;
+  font:700 9px/1 monospace;
+}
+
+/* =========================================================
+   LAYOUT
+   ========================================================= */
+
+main{
+  max-width:650px;
+  margin:auto;
+  padding:16px;
+}
+
+.screen{
+  display:none;
+}
+
+.screen.active{
+  display:block;
+}
+
+.stack{
+  display:grid;
+  gap:12px;
+}
+
+/* =========================================================
+   PANELS
+   ========================================================= */
+
+.panel{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:16px;
+  box-shadow:0 5px 15px rgba(0,0,0,.18);
+}
+
+.panel.green{
+  border:2px solid #059669;
+  background:#022c22;
+}
+
+.panel-title{
+  margin:0;
+  color:var(--amber2);
+  font-size:13px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+
+.muted{
+  color:var(--muted);
+}
+
+.small{
+  font-size:11px;
+}
+
+.tiny{
+  font-size:9px;
+}
+
+.mono{
+  font-family:monospace;
+}
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.btn{
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:10px 13px;
+  font-size:11px;
+  font-weight:800;
+  transition:
+    background .15s ease,
+    transform .15s ease,
+    border-color .15s ease;
+}
+
+.btn:active{
+  transform:scale(.98);
+}
+
+.btn-green{
+  background:#059669;
+  border-color:#34d399;
+  color:white;
+}
+
+.btn-green:hover{
+  background:#10b981;
+}
+
+.btn-amber{
+  background:var(--amber);
+  border-color:var(--amber2);
+  color:#020617;
+}
+
+.btn-dark{
+  background:#0f172a;
+  color:#cbd5e1;
+}
+
+.btn-red{
+  background:#e11d48;
+  border-color:#fb7185;
+  color:white;
+}
+
+/* =========================================================
+   ATTENDANCE
+   ========================================================= */
+
+.attendance-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+}
+
+.tent{
+  text-align:center;
+  padding:12px 0;
+}
+
+.tent-icon{
+  font-size:48px;
+}
+
+.present-count{
+  color:var(--amber2);
+  font-size:15px;
+  font-weight:800;
+}
+
+.chips{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:5px;
+  max-height:110px;
+  overflow:auto;
+  margin-top:10px;
+}
+
+.chip{
+  padding:5px 9px;
+  border-radius:999px;
+  background:#065f46;
+  border:1px solid #10b981;
+  color:#ecfdf5;
+  font-size:10px;
+  font-weight:700;
+}
+
+.cub-list{
+  display:grid;
+  gap:7px;
+  margin-top:8px;
+}
+
+.cub{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  width:100%;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:11px;
+  background:#1e293b;
+  color:white;
+  text-align:left;
+  transition:background .15s ease;
+}
+
+.cub:hover{
+  background:#334155;
+}
+
+.cub-info{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.rank{
+  width:24px;
+  height:24px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:#020617;
+  border:1px solid var(--border);
+  color:var(--amber2);
+  font:700 9px monospace;
+}
+
+.arrive{
+  padding:5px 9px;
+  border-radius:7px;
+  background:#022c22;
+  border:1px solid #065f46;
+  color:#6ee7b7;
+  font-size:9px;
+  font-weight:800;
+}
+
+/* =========================================================
+   AI PLANNER
+   ========================================================= */
+
+.ai{
+  position:relative;
+  overflow:hidden;
+  border:2px solid #064e3b;
+  background:linear-gradient(135deg,#0f172a,#022c22);
+}
+
+.ai.running{
+  border-color:#34d399;
+  box-shadow:0 0 18px rgba(16,185,129,.22);
+}
+
+.ai-icon{
+  display:inline-block;
+  font-size:19px;
+}
+
+.ai.running .ai-icon{
+  animation:spin 1s linear infinite;
+}
+
+.ai-progress{
+  height:6px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#020617;
+  border:1px solid #1e293b;
+}
+
+.ai-progress-bar{
+  height:100%;
+  width:0;
+  background:#34d399;
+  border-radius:inherit;
+  transition:width .3s ease;
+}
+
+.terminal{
+  display:grid;
+  place-items:center;
+  height:64px;
+  margin-top:12px;
+  padding:10px;
+  border:1px solid #064e3b;
+  border-radius:8px;
+  background:#020617;
+  color:#34d399;
+  text-align:center;
+  font:10px monospace;
+}
+
+/* =========================================================
+   MEETINGS / CAMPS
+   ========================================================= */
+
+.card{
+  overflow:hidden;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#1e293b;
+}
+
+.card-head{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:14px;
+}
+
+.card-body{
+  padding:14px;
+  border-top:1px solid var(--border);
+  background:#0f172a;
+}
+
+.date{
+  display:inline-block;
+  padding:3px 7px;
+  border-radius:5px;
+  background:#451a03;
+  border:1px solid #92400e;
+  color:var(--amber2);
+  font:9px monospace;
+}
+
+.status{
+  display:inline-block;
+  padding:5px 8px;
+  border-radius:999px;
+  font-size:9px;
+  font-weight:800;
+}
+
+.status.ready{
+  background:#022c22;
+  color:#34d399;
+  border:1px solid #065f46;
+}
+
+.status.action{
+  background:#4c0519;
+  color:#fda4af;
+  border:1px solid #9f1239;
+}
+
+/* =========================================================
+   LIVE
+   ========================================================= */
+
+.live-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.clock{
+  text-align:center;
+  padding:15px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#1e293b;
+}
+
+.clock-value{
+  margin-top:5px;
+  color:var(--amber2);
+  font:700 34px monospace;
+}
+
+.live-card{
+  border:2px solid #10b981;
+  border-radius:12px;
+  padding:18px;
+  background:#022c2266;
+}
+
+.live-title{
+  font-size:20px;
+  font-weight:900;
+}
+
+/* =========================================================
+   BOTTOM NAV
+   ========================================================= */
+
+.bottom-nav{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:40;
+  display:flex;
+  max-width:650px;
+  margin:auto;
+  overflow-x:auto;
+  padding:6px;
+  gap:3px;
+  background:rgba(2,6,23,.97);
+  border-top:1px solid #1e293b;
+  box-shadow:0 -8px 15px rgba(0,0,0,.35);
+}
+
+.nav-btn{
+  flex:0 0 auto;
+  min-width:57px;
+  padding:6px 7px;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  color:#64748b;
+  font-size:9px;
+  font-weight:800;
+  text-transform:uppercase;
+}
+
+.nav-btn.active{
+  background:#0f172a;
+  color:var(--amber2);
+}
+
+/* =========================================================
+   MODALS
+   ========================================================= */
+
+.modal{
+  position:fixed;
+  inset:0;
+  z-index:60;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  background:rgba(2,6,23,.9);
+}
+
+.modal.open{
+  display:flex;
+}
+
+.modal-box{
+  width:100%;
+  max-width:400px;
+  padding:24px;
+  border:2px solid #f43f5e;
+  border-radius:18px;
+  background:#1e293b;
+  text-align:center;
+}
+
+.rotation{
+  background:rgba(245,158,11,.94);
+}
+
+.rotation .modal-box{
+  border-color:#fbbf24;
+  background:#020617;
+}
+
+.rotation-icon{
+  font-size:64px;
+  animation:spin 3s linear infinite;
+}
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
+
+@keyframes fly{
+  0%{
+    transform:translateY(0) scale(1);
+    opacity:1;
+  }
+  100%{
+    transform:translateY(-90px) scale(.2);
+    opacity:0;
+  }
+}
+
+.fly{
+  animation:fly .45s ease forwards;
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,
+  *::before,
+  *::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+  }
+}
+</style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans pb-24" x-data="scoutApp()" x-cloak>
 
-  <!-- Header Bar -->
-  <header class="bg-emerald-950 border-b border-emerald-800 p-4 sticky top-0 z-30 flex items-center justify-between shadow-lg">
-    <div class="flex items-center space-x-2">
-      <span class="text-2xl">⚜️</span>
+<body>
+
+<header class="header">
+  <div class="brand">
+    <span class="brand-icon">⚜️</span>
+    <div>
+      <h1 class="brand-title">ScoutCommand</h1>
+      <div class="brand-sub">1st Elmira Cub Pack</div>
+    </div>
+  </div>
+
+  <div class="role">
+    Role: <span id="role">Akela</span>
+  </div>
+</header>
+
+<main>
+
+<!-- =====================================================
+     ATTENDANCE
+     ===================================================== -->
+
+<section id="attendance" class="screen">
+
+  <div class="panel green">
+    <div class="attendance-head">
+      <span class="tiny mono muted">CHECK-IN STATION</span>
+
+      <button id="undoBtn" class="btn btn-dark">
+        ↩️ Undo
+      </button>
+    </div>
+
+    <div class="tent">
+      <div class="tent-icon">🏕️</div>
+
+      <div class="present-count">
+        Present in the Tent
+        (<span id="presentCount">0</span> /
+        <span id="totalCount">0</span>)
+      </div>
+
+      <div id="presentList" class="chips"></div>
+    </div>
+  </div>
+
+  <div class="stack">
+
+    <div>
+      <strong class="small muted">
+        TAP TO CHECK IN
+      </strong>
+
+      <span id="remainingCount"
+            class="tiny muted"
+            style="float:right">
+      </span>
+    </div>
+
+    <div id="cubList" class="cub-list"></div>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     AI PLANNER
+     ===================================================== -->
+
+<section id="planner" class="screen active">
+
+  <div id="aiPanel" class="panel ai">
+
+    <div>
+      <h2 class="panel-title">
+        <span id="aiIcon" class="ai-icon">🧠</span>
+        Gemini Core
+      </h2>
+
+      <div class="tiny muted mono">
+        75 Oriole Pkwy Environment Optimizer
+      </div>
+    </div>
+
+    <div id="aiSetup" class="stack" style="margin-top:15px">
+
       <div>
-        <h1 class="font-bold text-amber-400 text-lg leading-tight">ScoutCommand</h1>
-        <p class="text-[10px] text-emerald-300 uppercase tracking-widest">1st Elmira Cub Pack</p>
-      </div>
-    </div>
-    <span class="bg-emerald-900 text-emerald-200 text-[10px] px-2.5 py-1 rounded-full border border-emerald-700 font-mono shadow-inner">
-      Role: <span x-text="user"></span>
-    </span>
-  </header>
+        <label class="tiny muted mono">
+          PROPERTY ZONE LOCK
+        </label>
 
-  <main class="p-4 space-y-4">
-
-    <!-- TAB 1: ATTENDANCE -->
-    <div x-show="tab === 'attendance'" x-transition.opacity.duration.300ms class="space-y-4">
-      <div class="bg-emerald-950 border-2 border-emerald-600 rounded-2xl p-4 text-center relative overflow-hidden shadow-[0_4px_20px_rgba(16,185,129,0.15)]">
-        <div class="flex justify-between items-center mb-1">
-          <span class="text-xs font-mono text-emerald-400">CHECK-IN STATION</span>
-          <button @click="undoCheckIn()" :disabled="history.length === 0" :class="history.length > 0 ? 'bg-amber-500 text-slate-950 border-amber-400 shadow' : 'bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed'" class="text-xs px-2.5 py-1 rounded-lg border font-bold flex items-center gap-1 transition-all">
-            ↩️ Undo Last
-          </button>
-        </div>
-        <div class="text-5xl my-2 drop-shadow-lg">🏕️</div>
-        <h3 class="font-bold text-amber-400 text-base">Present in the Tent (<span x-text="presentCubs.length"></span> / <span x-text="cubs.length"></span>)</h3>
-        <div class="flex flex-wrap justify-center gap-1.5 mt-3 max-h-28 overflow-y-auto no-scrollbar">
-          <template x-if="presentCubs.length === 0">
-            <span class="text-xs text-emerald-500/70 italic font-mono">Awaiting arrivals...</span>
-          </template>
-          <template x-for="c in presentCubs" :key="c.id">
-            <span class="bg-emerald-800 border border-emerald-500 text-emerald-50 text-[11px] px-2.5 py-1 rounded-full font-bold shadow-sm" x-text="'✓ ' + c.name"></span>
-          </template>
-        </div>
+        <select id="propertyZone"
+                style="width:100%;margin-top:6px;padding:11px;background:#020617;color:white;border:1px solid #065f46;border-radius:8px">
+          <option>Outdoor Back Field</option>
+          <option>Main Gym / Hall</option>
+        </select>
       </div>
 
-      <div class="space-y-2">
-        <div class="flex justify-between items-center">
-          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tap to Check In</h4>
-          <span class="text-[10px] text-slate-500 font-mono"><span x-text="absentCubs.length"></span> Remaining</span>
-        </div>
-        
-        <template x-if="absentCubs.length === 0">
-          <div class="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center text-emerald-400 font-bold text-sm shadow-inner">🎉 All Cubs have arrived!</div>
-        </template>
-        
-        <div class="space-y-2">
-          <template x-for="cub in absentCubs" :key="cub.id">
-            <button @click="checkIn(cub.id)" :class="{'animate-fly border-emerald-400 bg-emerald-900/80': animatingId === cub.id}" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 p-3.5 rounded-xl text-left flex items-center justify-between transition-all duration-300 shadow-sm relative overflow-hidden">
-              <div class="flex items-center space-x-3">
-                <span class="w-6 h-6 rounded-full bg-slate-900 border border-slate-700 text-amber-400 font-mono text-[10px] flex items-center justify-center font-bold shadow-inner" x-text="'#' + cub.rank"></span>
-                <span class="font-bold text-slate-100 text-sm tracking-wide" x-text="cub.name"></span>
-              </div>
-              <span class="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800 px-3 py-1 rounded-lg font-bold uppercase tracking-wider">Arrive ⛺</span>
-            </button>
-          </template>
-        </div>
-      </div>
+      <button id="runAI"
+              class="btn btn-green"
+              style="width:100%">
+        ✨ GENERATE SEASON VECTOR
+      </button>
+
     </div>
 
-    <!-- TAB 2: UNREAL AI PLANNER -->
-    <div x-show="tab === 'planner'" x-transition.opacity.duration.300ms class="space-y-4">
+    <div id="aiRunning" class="hidden" style="margin-top:15px">
+
+      <div style="display:flex;justify-content:space-between"
+           class="tiny mono">
+
+        <span id="aiPercent">
+          0% Synthesized
+        </span>
+
+        <span style="color:var(--amber)">
+          Processing Variables...
+        </span>
+
+      </div>
+
+      <div class="ai-progress" style="margin-top:7px">
+        <div id="aiProgress"
+             class="ai-progress-bar"></div>
+      </div>
+
+      <div id="terminal"
+           class="terminal">
+        Establishing Uplink...
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="stack" style="margin-top:15px">
+
+    <h3 class="small muted">
+      MEETING VECTORS
+    </h3>
+
+    <div id="meetings"></div>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     CAMPS
+     ===================================================== -->
+
+<section id="camps" class="screen">
+
+  <div class="panel">
+
+    <h2 class="panel-title">
+      🏕️ Scouts Canada Grid
+    </h2>
+
+    <p class="small muted">
+      High-coverage weekends are highlighted while maintaining
+      minimum spacing between deployments.
+    </p>
+
+  </div>
+
+  <div id="campList"
+       class="stack"
+       style="margin-top:12px">
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     LIVE
+     ===================================================== -->
+
+<section id="live" class="screen">
+
+  <div class="live-grid">
+
+    <div class="clock">
+      <div class="tiny muted">
+        MISSION CLOCK
+      </div>
+
+      <div class="clock-value">
+        84:20
+      </div>
+    </div>
+
+    <button id="helpButton"
+            class="btn btn-red">
+      🚨<br>
+      CALL SCOUTER<br>
+      SUPPORT
+    </button>
+
+  </div>
+
+  <div style="margin-top:15px">
+
+    <div class="small muted">
+      SEQUENCE TRACKER
+    </div>
+
+    <div id="liveCard"
+         class="live-card"
+         style="margin-top:8px">
+    </div>
+
+    <button id="advanceBtn"
+            class="btn btn-amber"
+            style="width:100%;margin-top:12px">
+      ⏭️ OVERRIDE & ADVANCE
+    </button>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     BUY
+     ===================================================== -->
+
+<section id="buy" class="screen">
+
+  <div class="panel">
+
+    <h2 class="panel-title">
+      🛒 Procurement API
+    </h2>
+
+    <p class="small muted">
+      Requisition for Oct 13 Deployment
+    </p>
+
+    <div class="panel"
+         style="margin-top:12px;background:#020617">
+
+      <div class="small">
+        100ft Olive Paracord
+        <span style="float:right">$8.99</span>
+      </div>
+
+      <div class="small" style="margin-top:8px">
+        30-Pack 3/8" Buckles
+        <span style="float:right">$6.50</span>
+      </div>
+
+      <hr style="border-color:#334155;margin:12px 0">
+
+      <strong style="color:var(--green2)">
+        Total:
+        <span style="float:right">$15.49</span>
+      </strong>
+
+    </div>
+
+    <p class="small muted">
+      Crafts Envelope Remaining:
+      <strong id="budget"
+              style="color:var(--green2)">
+        $184.51
+      </strong>
+    </p>
+
+    <button id="approveOrder"
+            class="btn btn-green"
+            style="width:100%">
+      AUTHORIZE & SHIP TO HOME
+    </button>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     BADGES
+     ===================================================== -->
+
+<section id="badges" class="screen">
+
+  <div class="panel">
+
+    <div style="display:flex;justify-content:space-between;align-items:center">
+
+      <div>
+        <strong class="small">
+          SCOUTER OVERRIDE
+        </strong>
+
+        <div class="tiny muted">
+          Mask modules from youth terminal
+        </div>
+      </div>
+
+      <button id="adminToggle"
+              class="btn btn-dark">
+        YOUTH VIEW
+      </button>
+
+    </div>
+
+  </div>
+
+  <div id="badgeList"
+       class="stack"
+       style="margin-top:12px">
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     SETTINGS
+     ===================================================== -->
+
+<section id="settings" class="screen">
+
+  <div class="panel">
+
+    <h2 class="panel-title">
+      System Override Config
+    </h2>
+
+    <label class="tiny muted">
+      ACTIVE TERMINAL PROFILE
+    </label>
+
+    <select id="userSelect"
+            style="width:100%;margin-top:7px;padding:10px;background:#020617;color:white;border:1px solid #334155;border-radius:8px">
+
+      <option>Akela</option>
+      <option>Baloo</option>
+      <option>Parent</option>
+
+    </select>
+
+  </div>
+
+</section>
+
+</main>
+
+
+<!-- =====================================================
+     HELP MODAL
+     ===================================================== -->
+
+<div id="helpModal" class="modal">
+
+  <div class="modal-box">
+
+    <div style="font-size:50px">📢</div>
+
+    <h2 style="color:#fb7185">
+      SUPPORT BEACON
+    </h2>
+
+    <div id="helpContent">
+
+      <button id="urgentHelp"
+              class="btn btn-red"
+              style="width:100%;margin-top:8px">
+        🚨 URGENT RED
+      </button>
+
+      <button id="routineHelp"
+              class="btn btn-amber"
+              style="width:100%;margin-top:8px">
+        🙋 ROUTINE YELLOW
+      </button>
+
+      <button id="closeHelp"
+              class="btn btn-dark"
+              style="width:100%;margin-top:8px">
+        Abort Signal
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     ROTATION MODAL
+     ===================================================== -->
+
+<div id="rotationModal"
+     class="modal rotation">
+
+  <div class="modal-box">
+
+    <div class="rotation-icon">
+      🔄
+    </div>
+
+    <h1 style="font-size:45px;color:var(--amber)">
+      SHIFT!
+    </h1>
+
+    <div class="panel">
+      <div class="tiny muted">
+        EXECUTING PHASE
+      </div>
+
+      <div id="rotationName"
+           style="font-size:18px;font-weight:800;margin-top:5px">
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     NAVIGATION
+     ===================================================== -->
+
+<nav class="bottom-nav">
+
+  <button class="nav-btn"
+          data-tab="attendance">
+    ⛺<br>Arrive
+  </button>
+
+  <button class="nav-btn active"
+          data-tab="planner">
+    🧠<br>AI Plan
+  </button>
+
+  <button class="nav-btn"
+          data-tab="camps">
+    🏕️<br>Camps
+  </button>
+
+  <button class="nav-btn"
+          data-tab="live">
+    ⏱️<br>Live
+  </button>
+
+  <button class="nav-btn"
+          data-tab="buy">
+    🛒<br>Buy
+  </button>
+
+  <button class="nav-btn"
+          data-tab="badges">
+    🗳️<br>Badges
+  </button>
+
+  <button class="nav-btn"
+          data-tab="settings">
+    ⚙️<br>Config
+  </button>
+
+</nav>
+
+
+<script>
+"use strict";
+
+/* =========================================================
+   STATE
+   ========================================================= */
+
+const state = {
+
+  tab:"planner",
+
+  user:"Akela",
+
+  admin:false,
+
+  budget:184.51,
+
+  history:[],
+
+  selectedMeeting:null,
+
+  selectedCamp:null,
+
+  activity:0,
+
+  meetings:[
+    {
+      id:1,
+      date:"Oct 13",
+      title:"Paracord Navigation",
+      theme:"Trail Skills 2",
+      location:"75 Oriole Pkwy",
+      action:true,
+      note:"Need buckles prepped",
+      stations:[
+        ["Compass","Baloo"],
+        ["Paracord","Unassigned"]
+      ]
+    },
+    {
+      id:2,
+      date:"Oct 20",
+      title:"Campfire Safety",
+      theme:"Bushcraft 1",
+      location:"75 Oriole Fire Pit",
+      action:false,
+      note:"Supplies confirmed",
+      stations:[
+        ["Edible Fires","Bagheera"],
+        ["Spark Lighting","Akela"]
+      ]
+    }
+  ],
+
+  camps:[
+    {
+      id:"c1",
+      date:"Oct 17–18, 2026",
+      rec:"Laurel Creek",
+      best:false,
+      score:"2/5 Scouters",
       
-      <!-- Mind-Blowing Gemini Engine UI -->
-      <div :class="isAIPlanning ? 'border-emerald-400 ai-glow bg-emerald-950/40' : 'border-emerald-800 bg-gradient-to-br from-slate-900 to-emerald-950/30'" class="border-2 rounded-2xl p-5 space-y-4 shadow-2xl relative overflow-hidden transition-all duration-500">
-        <!-- Holographic Background Elements -->
-        <div class="absolute top-0 right-0 p-3 opacity-10 text-7xl transform rotate-12">✨</div>
-        <div x-show="isAIPlanning" class="absolute inset-0 bg-emerald-500/10 animate-scan"></div>
-        
-        <div class="flex justify-between items-center relative z-10">
-          <div>
-            <h2 class="font-black text-emerald-400 text-lg flex items-center gap-2 tracking-wide">
-              <span :class="isAIPlanning ? 'animate-spin' : ''" class="inline-block">🧠</span> Gemini Core
-            </h2>
-            <p class="text-[10px] text-emerald-200/70 font-mono uppercase">75 Oriole Pkwy Environment Optimizer</p>
-          </div>
-        </div>
-
-        <template x-if="isAIPlanning">
-          <div class="space-y-4 relative z-10 py-4">
-            <div class="flex justify-between text-[10px] text-emerald-300 font-mono uppercase tracking-widest">
-              <span x-text="Math.floor((aiStep / aiMessages.length) * 100) + '% Synthesized'"></span>
-              <span class="animate-pulse text-amber-400">Processing Variables...</span>
-            </div>
-            
-            <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden shadow-inner border border-slate-800">
-              <div class="bg-emerald-400 h-1.5 rounded-full transition-all duration-300 shadow-[0_0_10px_#34d399]" :style="'width: ' + ((aiStep / aiMessages.length) * 100) + '%'"></div>
-            </div>
-            
-            <!-- Terminal Output -->
-            <div class="bg-slate-950/80 rounded-lg p-3 border border-emerald-900/50 shadow-inner h-16 flex items-center justify-center">
-              <p class="text-[10px] text-emerald-400 font-mono text-center tracking-wide" x-text="aiMessages[aiStep]"></p>
-            </div>
-          </div>
-        </template>
-
-        <template x-if="!isAIPlanning">
-          <div class="space-y-4 relative z-10">
-            <div class="space-y-2 text-xs">
-              <label class="text-slate-400 block font-mono text-[10px] uppercase">Property Zone Lock:</label>
-              <select x-model="propertyZone" class="w-full bg-slate-950/80 border border-emerald-700/50 rounded-lg p-3 text-emerald-50 font-bold focus:outline-none focus:border-emerald-400 shadow-inner appearance-none text-sm">
-                <option value="Outdoor Back Field">🌲 Outdoor Back Field (Auto-Select Sept/Oct)</option>
-                <option value="Main Gym / Hall">🏫 Main Gym / Hall (Auto-Select Nov/Dec)</option>
-              </select>
-            </div>
-            <button @click="runAI()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black tracking-widest text-xs py-4 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] uppercase border border-emerald-300">
-              <span>✨</span> Generate Season Vector
-            </button>
-          </div>
-        </template>
-      </div>
-
-      <div class="space-y-3">
-        <h3 class="font-bold text-slate-300 text-xs uppercase tracking-widest px-1">Meeting Vectors</h3>
-        
-        <template x-for="m in meetings" :key="m.id">
-          <div class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-md transition-all duration-300" :class="selectedMeeting === m.id ? 'border-amber-500/50' : ''">
-            
-            <div @click="selectedMeeting = selectedMeeting === m.id ? null : m.id" class="p-4 cursor-pointer flex justify-between hover:bg-slate-750 transition relative overflow-hidden">
-              <div class="space-y-1.5 z-10">
-                <span class="text-[10px] font-mono text-amber-400 bg-amber-950/50 px-2 py-0.5 rounded border border-amber-800/50 uppercase" x-text="m.date"></span>
-                <h4 class="font-bold text-slate-100 text-[15px] tracking-wide" x-text="m.title"></h4>
-                <p class="text-[10px] text-emerald-400 uppercase tracking-wider font-bold" x-text="m.theme"></p>
-                <p class="text-[11px] text-slate-400 flex items-center gap-1 font-mono mt-1">📍 <span x-text="m.location"></span></p>
-              </div>
-              <div class="z-10">
-                <template x-if="m.actionRequired">
-                  <span class="bg-rose-950/80 text-rose-300 border border-rose-800 text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider shadow">⚠️ Action</span>
-                </template>
-                <template x-if="!m.actionRequired">
-                  <span class="bg-emerald-950/80 text-emerald-300 border border-emerald-800 text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider shadow">✓ Ready</span>
-                </template>
-              </div>
-            </div>
-
-            <div x-show="selectedMeeting === m.id" x-transition class="bg-slate-900 p-4 border-t border-slate-700 space-y-4 text-xs">
-              <div :class="m.actionRequired ? 'bg-rose-950/30 border-rose-800/50 text-rose-200' : 'bg-emerald-950/30 border-emerald-800/50 text-emerald-200'" class="p-3 rounded-lg border text-[11px] leading-relaxed">
-                <strong class="uppercase tracking-wider">Status Note:</strong> <span x-text="m.actionNotice"></span>
-              </div>
-              
-              <div class="space-y-2">
-                <h5 class="font-bold text-amber-500/80 text-[10px] uppercase tracking-widest">Station Leads</h5>
-                <template x-for="st in m.stations" :key="st.id">
-                  <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 flex justify-between items-center shadow-inner">
-                    <span class="font-bold text-slate-200 text-xs" x-text="st.name"></span>
-                    <div class="flex items-center gap-2">
-                      <span :class="st.assignedTo === 'Unassigned' ? 'text-amber-400' : 'text-emerald-400'" class="font-mono text-[10px] font-bold uppercase" x-text="st.assignedTo"></span>
-                      <template x-if="st.assignedTo === 'Unassigned'">
-                        <button @click="assignStation(m.id, st.id)" class="bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded text-[10px] text-white font-bold tracking-wider shadow">CLAIM</button>
-                      </template>
-                    </div>
-                  </div>
-                </template>
-              </div>
-            </div>
-
-          </div>
-        </template>
-      </div>
-    </div>
-
-    <!-- TAB 3: CAMPS PLANNER -->
-    <div x-show="tab === 'camps'" x-transition.opacity.duration.300ms class="space-y-4">
-      <div class="bg-slate-800 border border-slate-700 rounded-xl p-5 space-y-2 shadow-md">
-        <h2 class="font-bold text-amber-400 text-sm flex items-center gap-2 uppercase tracking-wide"><span>🏕️</span> Scouts Canada Grid</h2>
-        <p class="text-[11px] text-slate-300 leading-relaxed">High-coverage weekends are highlighted, strictly maintaining <strong class="text-emerald-400 bg-emerald-950 px-1 rounded">3 weeks minimum spacing</strong> between deployments.</p>
-      </div>
-      
-      <div class="space-y-2">
-        <template x-for="wknd in camps" :key="wknd.id">
-          <div :class="wknd.isBestPick ? 'bg-slate-800 border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.1)]' : 'bg-slate-900 border-slate-800'" class="border rounded-xl overflow-hidden transition-all duration-300">
-            <div @click="selectedCamp = selectedCamp === wknd.id ? null : wknd.id" class="p-4 cursor-pointer flex justify-between relative">
-              <div class="space-y-1.5 z-10">
-                <div class="flex items-center gap-2">
-                  <span class="font-bold text-slate-100 text-[13px] tracking-wide" x-text="wknd.date"></span>
-                  <template x-if="wknd.isBestPick">
-                    <span class="bg-amber-500 text-slate-950 font-black text-[9px] px-2 py-0.5 rounded shadow-sm uppercase tracking-wider">⭐ Optimal Pick</span>
-                  </template>
-                </div>
-                <p class="text-[11px] text-emerald-400 font-mono tracking-tight">📍 <span x-text="wknd.rec"></span></p>
-              </div>
-              <div class="text-right z-10 flex flex-col justify-center">
-                <span :class="wknd.score.includes('5/5') || wknd.score.includes('4/5') ? 'bg-emerald-950 text-emerald-400 border-emerald-800' : 'bg-slate-800 text-slate-400 border-slate-700'" class="text-[10px] font-mono font-bold px-2 py-1 rounded border shadow-inner" x-text="wknd.score"></span>
-              </div>
-            </div>
-            
-            <div x-show="selectedCamp === wknd.id" x-transition class="bg-slate-950 p-4 border-t border-slate-800 space-y-3 text-xs">
-              <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 text-slate-300 space-y-2 text-[11px] shadow-inner">
-                <p><strong class="text-slate-400 uppercase tracking-wider">Facility:</strong> <span x-text="wknd.accom"></span></p>
-                <p><strong class="text-slate-400 uppercase tracking-wider">Transit:</strong> <span x-text="wknd.drive"></span></p>
-                <p><strong class="text-slate-400 uppercase tracking-wider">Atmosphere:</strong> <span x-text="wknd.weather"></span></p>
-              </div>
-              <div class="bg-emerald-950/40 p-3 rounded-lg border border-emerald-800/50 text-emerald-200 text-[11px] leading-relaxed">
-                <strong class="uppercase tracking-wider text-emerald-400 block mb-1">Target Activities:</strong> <span x-text="wknd.acts"></span>
-              </div>
-              <div class="text-[10px] text-amber-500/90 font-mono italic px-1" x-text="'ℹ️ ' + wknd.gap"></div>
-            </div>
-          </div>
-        </template>
-      </div>
-    </div>
-
-    <!-- TAB 4: LIVE MEETING (AKELA RESTRICTED) -->
-    <div x-show="tab === 'live'" x-transition.opacity.duration.300ms class="space-y-4">
-      <div class="grid grid-cols-2 gap-3">
-        <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-col justify-center items-center shadow-inner">
-          <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Mission Clock</span>
-          <div class="text-4xl font-mono font-bold text-amber-400 tracking-tight">84:20</div>
-        </div>
-        <button @click="helpOpen = true" class="bg-slate-800 hover:bg-slate-750 border-2 border-rose-500 rounded-xl p-4 flex flex-col justify-center items-center transition-all shadow-[0_0_15px_rgba(244,63,94,0.15)] group">
-          <span class="text-3xl mb-1 group-hover:scale-110 transition-transform">🚨</span>
-          <span class="text-[10px] text-rose-400 font-bold uppercase tracking-widest text-center leading-tight">Call Scouter<br/>Support</span>
-        </button>
-      </div>
-
-      <div class="space-y-3 pt-2">
-        <h3 class="font-bold text-slate-300 text-xs uppercase tracking-widest flex items-center justify-between px-1">
-          <span>Sequence Tracker</span>
-          <span class="text-[10px] text-slate-500 font-mono bg-slate-800 px-2 py-1 rounded" x-text="'Phase ' + (activityIdx + 1) + ' of ' + schedule.length"></span>
-        </h3>
-        
-        <div class="bg-emerald-950/40 border-2 border-emerald-500 rounded-xl p-5 space-y-2 shadow-lg relative overflow-hidden">
-          <div class="absolute top-0 left-0 w-1.5 bg-emerald-400 h-full shadow-[0_0_10px_#34d399]"></div>
-          <div class="flex justify-between text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-2">
-            <span class="animate-pulse">▶ Live Execution</span>
-            <span class="bg-emerald-900 border border-emerald-700 px-2 py-0.5 rounded shadow-inner" x-text="schedule[activityIdx].dur"></span>
-          </div>
-          <h4 class="font-black text-slate-50 text-xl tracking-wide" x-text="schedule[activityIdx].name"></h4>
-          <p class="text-xs text-emerald-100/70 leading-relaxed font-mono" x-text="schedule[activityIdx].desc"></p>
-        </div>
-
-        <template x-if="activityIdx < schedule.length - 1">
-          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-1 opacity-60">
-            <div class="flex justify-between text-[9px] font-bold text-slate-500 uppercase tracking-widest">
-              <span>Next Phase</span>
-              <span x-text="schedule[activityIdx + 1].dur"></span>
-            </div>
-            <h4 class="font-bold text-slate-400 text-sm" x-text="schedule[activityIdx + 1].name"></h4>
-          </div>
-        </template>
-      </div>
-
-      <template x-if="user === 'Akela'">
-        <button @click="advanceActivity()" :disabled="activityIdx >= schedule.length - 1" :class="activityIdx >= schedule.length - 1 ? 'bg-slate-900 border-slate-800 text-slate-600 cursor-not-allowed' : 'bg-amber-500 hover:bg-amber-400 border-amber-300 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.3)]'" class="w-full py-4 rounded-xl border-2 flex items-center justify-center gap-2 mt-6 text-xs tracking-widest uppercase font-black transition-all transform hover:scale-[1.02]">
-          <span x-text="activityIdx >= schedule.length - 1 ? '🏁 SEQUENCE COMPLETE' : '⏭️ OVERRIDE & ADVANCE (Akela)'"></span>
-        </button>
-      </template>
-    </div>
-
-    <!-- TAB 5: BUY -->
-    <div x-show="tab === 'buy'" x-transition.opacity.duration.300ms class="space-y-4">
-      <div class="bg-slate-800 border border-slate-700 rounded-xl p-5 space-y-4 shadow-md">
-        <div class="flex justify-between items-center border-b border-slate-700 pb-3">
-          <h2 class="font-bold text-amber-400 flex items-center gap-2 text-sm uppercase tracking-wide"><span>🛒</span> Procurement API</h2>
-          <span class="text-[9px] font-black bg-amber-500 text-slate-950 px-2 py-0.5 rounded uppercase tracking-widest shadow">Approval Req</span>
-        </div>
-        <div class="space-y-3 text-xs">
-          <p class="text-slate-400 text-[11px] uppercase tracking-wide
