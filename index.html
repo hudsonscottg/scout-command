@@ -5,15 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ScoutCommand - Mobile Scouter Hub</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
   <style>
     body { -webkit-tap-highlight-color: transparent; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     
-    /* Fly into Tent Animation */
     @keyframes flyToTent {
       0% { transform: translateY(0) scale(1); opacity: 1; }
       50% { transform: translateY(-70px) scale(0.6) rotate(-6deg); opacity: 0.8; }
@@ -26,7 +25,11 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans pb-24">
 
-  <div id="root"></div>
+  <div id="root">
+    <div class="flex items-center justify-center min-h-screen text-slate-400 text-sm font-mono">
+      Loading ScoutCommand...
+    </div>
+  </div>
 
   <script type="text/babel">
     const { useState, useEffect } = React;
@@ -34,7 +37,6 @@
     function ScoutCommandApp() {
       const [activeTab, setActiveTab] = useState('attendance');
 
-      // Feature Flags State
       const [flags, setFlags] = useState({
         autoProcurement: true,
         youthVote: true,
@@ -42,9 +44,7 @@
         betaSync: false
       });
 
-      // -------------------------------------------------------------
-      // 1. ATTENDANCE STATE (Sorted by Typical Arrival Sequence)
-      // -------------------------------------------------------------
+      // ATTENDANCE STATE
       const [cubRoster, setCubRoster] = useState([
         { id: 1, name: 'Benjamin H.', arrivalRank: 1, status: 'absent' },
         { id: 2, name: 'Brookie H.', arrivalRank: 2, status: 'absent' },
@@ -76,9 +76,7 @@
         setAttendanceHistory(prev => prev.slice(0, -1));
       };
 
-      // -------------------------------------------------------------
-      // 2. PLANNER & MEETINGS STATE
-      // -------------------------------------------------------------
+      // PLANNER & MEETINGS STATE
       const [selectedMeetingId, setSelectedMeetingId] = useState(null);
       const [meetings, setMeetings] = useState([
         {
@@ -89,11 +87,10 @@
           actionRequired: true,
           actionNotice: 'Need Scouter to purchase buckles & prep paracord',
           scouterCoverageCount: 3,
-          leadScouter: 'Akela (Scott)',
           stations: [
-            { id: 's1', name: 'Station A: Compass Bearings', assignedTo: 'Baloo', needed: true },
-            { id: 's2', name: 'Station B: Paracord Weaving', assignedTo: 'Unassigned', needed: true },
-            { id: 's3', name: 'Gathering Game: Knot Relay', assignedTo: 'Kaa', needed: true }
+            { id: 's1', name: 'Station A: Compass Bearings', assignedTo: 'Baloo' },
+            { id: 's2', name: 'Station B: Paracord Weaving', assignedTo: 'Unassigned' },
+            { id: 's3', name: 'Gathering Game: Knot Relay', assignedTo: 'Kaa' }
           ],
           actionItems: [
             { id: 'a1', task: 'Pick up propane tanks', assignedTo: 'Parent Volunteer' },
@@ -108,13 +105,12 @@
           actionRequired: false,
           actionNotice: 'All supplies & station leads confirmed',
           scouterCoverageCount: 4,
-          leadScouter: 'Baloo',
           stations: [
-            { id: 's4', name: 'Station A: Pretzel Fire Building', assignedTo: 'Bagheera', needed: true },
-            { id: 's5', name: 'Station B: Spark Lighting Safety', assignedTo: 'Akela (Scott)', needed: true }
+            { id: 's4', name: 'Station A: Pretzel Fire Building', assignedTo: 'Bagheera' },
+            { id: 's5', name: 'Station B: Spark Lighting Safety', assignedTo: 'Akela' }
           ],
           actionItems: [
-            { id: 'a3', task: 'Bring pretzel sticks & marshmallows', assignedTo: 'Akela (Scott)' }
+            { id: 'a3', task: 'Bring pretzel sticks & marshmallows', assignedTo: 'Akela' }
           ]
         }
       ]);
@@ -139,9 +135,7 @@
         }));
       };
 
-      // -------------------------------------------------------------
-      // 3. BADGES & YOUTH VOTE STATE (With Scouter Admin Filter)
-      // -------------------------------------------------------------
+      // BADGES STATE
       const [scouterAdminMode, setScouterAdminMode] = useState(false);
       const [allBadges, setAllBadges] = useState([
         { id: 'b1', name: 'Camping OAS', category: 'Outdoor Adventure', votes: 15, enabled: true },
@@ -151,8 +145,7 @@
         { id: 'b5', name: 'Winter Skills OAS', category: 'Outdoor Adventure', votes: 4, enabled: false },
         { id: 'b6', name: 'Space Explorer', category: 'Personal Achievement', votes: 11, enabled: true },
         { id: 'b7', name: 'Wilderness Chef', category: 'Personal Achievement', votes: 14, enabled: true },
-        { id: 'b8', name: 'Builder & Carpenter', category: 'Personal Achievement', votes: 8, enabled: true },
-        { id: 'b9', name: 'Global Citizen', category: 'Personal Achievement', votes: 3, enabled: false }
+        { id: 'b8', name: 'Builder & Carpenter', category: 'Personal Achievement', votes: 8, enabled: true }
       ]);
 
       const toggleBadgeEnabled = (id) => {
@@ -163,9 +156,7 @@
         setAllBadges(prev => prev.map(b => b.id === id ? { ...b, votes: b.votes + 1 } : b));
       };
 
-      // -------------------------------------------------------------
-      // 4. PARENT ENGAGEMENT & LOGISTICS STATE
-      // -------------------------------------------------------------
+      // PARENT SURVEY STATE
       const [parentSurvey, setParentSurvey] = useState({
         maxDriveMinutes: 60,
         canCarpool: 'Yes, 3 extra seats',
@@ -191,9 +182,7 @@
         });
       };
 
-      // -------------------------------------------------------------
-      // 5. LIVE HELP MODAL (2 Levels: Urgent vs Routine)
-      // -------------------------------------------------------------
+      // HELP MODAL STATE
       const [helpModalOpen, setHelpModalOpen] = useState(false);
       const [helpSentMessage, setHelpSentMessage] = useState(null);
 
@@ -202,62 +191,55 @@
         setTimeout(() => {
           setHelpModalOpen(false);
           setHelpSentMessage(null);
-        }, 2200);
+        }, 2000);
       };
 
-      // Filtered lists for attendance
       const absentCubs = cubRoster.filter(c => c.status === 'absent').sort((a,b) => a.arrivalRank - b.arrivalRank);
       const presentCubs = cubRoster.filter(c => c.status === 'present');
 
       return (
-        <div class="max-w-md mx-auto min-h-screen bg-slate-900 shadow-2xl relative flex flex-col">
+        <div className="max-w-md mx-auto min-h-screen bg-slate-900 shadow-2xl relative flex flex-col">
           
-          {/* Header Bar */}
-          <header class="bg-emerald-950 border-b border-emerald-800 p-4 sticky top-0 z-30 flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-              <span class="text-2xl">⚜️</span>
+          <header className="bg-emerald-950 border-b border-emerald-800 p-4 sticky top-0 z-30 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="text-2xl">⚜️</span>
               <div>
-                <h1 class="font-bold text-amber-400 text-lg leading-tight">ScoutCommand</h1>
-                <p class="text-xs text-emerald-300">1st Elmira Cub Pack</p>
+                <h1 className="font-bold text-amber-400 text-lg leading-tight">ScoutCommand</h1>
+                <p className="text-xs text-emerald-300">1st Elmira Cub Pack</p>
               </div>
             </div>
-            <span class="bg-emerald-900 text-emerald-200 text-xs px-2.5 py-1 rounded-full border border-emerald-700 font-mono">
+            <span className="bg-emerald-900 text-emerald-200 text-xs px-2.5 py-1 rounded-full border border-emerald-700 font-mono">
               2026–2027
             </span>
           </header>
 
-          {/* Main Content Body */}
-          <main class="flex-1 p-4 space-y-4 overflow-y-auto no-scrollbar">
+          <main className="flex-1 p-4 space-y-4 overflow-y-auto no-scrollbar">
 
-            {/* ========================================================= */}
-            {/* TAB 1: ATTENDANCE (Fly into Tent Animation) */}
-            {/* ========================================================= */}
+            {/* TAB 1: ATTENDANCE */}
             {activeTab === 'attendance' && (
-              <div class="space-y-4">
+              <div className="space-y-4">
                 
-                {/* Visual Tent Receiver Box */}
-                <div class="bg-emerald-950 border-2 border-emerald-600 rounded-2xl p-4 text-center relative overflow-hidden shadow-xl">
-                  <div class="flex justify-between items-center mb-1">
-                    <span class="text-xs font-mono text-emerald-400">CHECK-IN STATION</span>
+                <div className="bg-emerald-950 border-2 border-emerald-600 rounded-2xl p-4 text-center relative overflow-hidden shadow-xl">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs font-mono text-emerald-400">CHECK-IN STATION</span>
                     <button 
                       onClick={handleUndoAttendance}
                       disabled={attendanceHistory.length === 0}
-                      class={`text-xs px-2.5 py-1 rounded-lg border font-bold flex items-center gap-1 ${attendanceHistory.length > 0 ? 'bg-amber-500 text-slate-950 border-amber-400 shadow' : 'bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed'}`}
+                      className={`text-xs px-2.5 py-1 rounded-lg border font-bold flex items-center gap-1 ${attendanceHistory.length > 0 ? 'bg-amber-500 text-slate-950 border-amber-400 shadow' : 'bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed'}`}
                     >
                       ↩️ Undo Last
                     </button>
                   </div>
 
-                  <div class="text-5xl my-2">🏕️</div>
-                  <h3 class="font-bold text-amber-400 text-base">Present in the Tent ({presentCubs.length} / {cubRoster.length})</h3>
+                  <div className="text-5xl my-2">🏕️</div>
+                  <h3 className="font-bold text-amber-400 text-base">Present in the Tent ({presentCubs.length} / {cubRoster.length})</h3>
 
-                  {/* Present Cubs Badges */}
-                  <div class="flex flex-wrap justify-center gap-1.5 mt-3 max-h-28 overflow-y-auto no-scrollbar">
+                  <div className="flex flex-wrap justify-center gap-1.5 mt-3 max-h-28 overflow-y-auto no-scrollbar">
                     {presentCubs.length === 0 ? (
-                      <span class="text-xs text-emerald-500 italic">No Cubs checked in yet...</span>
+                      <span className="text-xs text-emerald-500 italic">No Cubs checked in yet...</span>
                     ) : (
                       presentCubs.map(c => (
-                        <span key={c.id} class="bg-emerald-800 border border-emerald-600 text-emerald-100 text-xs px-2.5 py-1 rounded-full font-bold shadow-sm">
+                        <span key={c.id} className="bg-emerald-800 border border-emerald-600 text-emerald-100 text-xs px-2.5 py-1 rounded-full font-bold shadow-sm">
                           ✓ {c.name}
                         </span>
                       ))
@@ -265,34 +247,33 @@
                   </div>
                 </div>
 
-                {/* Arriving Cubs List (Sorted by Arrival Rank) */}
-                <div class="space-y-2">
-                  <div class="flex justify-between items-center">
-                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tap to Check In (Sorted by Typical Arrival)</h4>
-                    <span class="text-[10px] text-slate-500 font-mono">{absentCubs.length} Remaining</span>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tap to Check In (Sorted by Arrival)</h4>
+                    <span className="text-[10px] text-slate-500 font-mono">{absentCubs.length} Remaining</span>
                   </div>
 
                   {absentCubs.length === 0 ? (
-                    <div class="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center text-emerald-400 font-bold text-sm">
+                    <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center text-emerald-400 font-bold text-sm">
                       🎉 All Cubs have arrived and are in the tent!
                     </div>
                   ) : (
-                    <div class="space-y-2">
+                    <div className="space-y-2">
                       {absentCubs.map((cub) => {
                         const isAnimating = animatingId === cub.id;
                         return (
                           <button
                             key={cub.id}
                             onClick={() => handleCheckIn(cub.id)}
-                            class={`w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 p-3.5 rounded-xl text-left flex items-center justify-between transition-all duration-300 shadow-sm ${isAnimating ? 'animate-fly border-emerald-400 bg-emerald-900/80' : ''}`}
+                            className={`w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 p-3.5 rounded-xl text-left flex items-center justify-between transition-all duration-300 shadow-sm ${isAnimating ? 'animate-fly border-emerald-400 bg-emerald-900/80' : ''}`}
                           >
-                            <div class="flex items-center space-x-3">
-                              <span class="w-6 h-6 rounded-full bg-slate-900 border border-slate-700 text-amber-400 font-mono text-xs flex items-center justify-center font-bold">
+                            <div className="flex items-center space-x-3">
+                              <span className="w-6 h-6 rounded-full bg-slate-900 border border-slate-700 text-amber-400 font-mono text-xs flex items-center justify-center font-bold">
                                 #{cub.arrivalRank}
                               </span>
-                              <span class="font-bold text-slate-100 text-sm">{cub.name}</span>
+                              <span className="font-bold text-slate-100 text-sm">{cub.name}</span>
                             </div>
-                            <span class="text-xs bg-emerald-950 text-emerald-300 border border-emerald-800 px-3 py-1 rounded-lg font-bold">
+                            <span className="text-xs bg-emerald-950 text-emerald-300 border border-emerald-800 px-3 py-1 rounded-lg font-bold">
                               Touch to Arrive ⛺
                             </span>
                           </button>
@@ -305,73 +286,64 @@
               </div>
             )}
 
-            {/* ========================================================= */}
-            {/* TAB 2: PLANNER (Clean Overview & Detailed Modal) */}
-            {/* ========================================================= */}
+            {/* TAB 2: PLANNER */}
             {activeTab === 'planner' && (
-              <div class="space-y-4">
-                
-                {/* Weekly Meeting Summaries */}
-                <div class="space-y-3">
-                  <div class="flex justify-between items-center">
-                    <h3 class="font-bold text-slate-300 text-sm">Seasonal Weekly Program</h3>
-                    <span class="text-xs text-emerald-400 font-mono">Tap for Full Breakdown & Signups</span>
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-bold text-slate-300 text-sm">Weekly Program Overview</h3>
+                    <span className="text-xs text-emerald-400 font-mono">Tap Meeting for Signups</span>
                   </div>
 
                   {meetings.map((m) => (
-                    <div key={m.id} class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-sm">
+                    <div key={m.id} className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-sm">
                       <div 
                         onClick={() => setSelectedMeetingId(selectedMeetingId === m.id ? null : m.id)}
-                        class="p-4 cursor-pointer flex items-center justify-between hover:bg-slate-750 transition"
+                        className="p-4 cursor-pointer flex items-center justify-between hover:bg-slate-750 transition"
                       >
-                        <div class="space-y-1">
-                          <div class="flex items-center gap-2">
-                            <span class="text-xs font-mono text-amber-400 bg-amber-950 px-2 py-0.5 rounded border border-amber-800">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono text-amber-400 bg-amber-950 px-2 py-0.5 rounded border border-amber-800">
                               {m.date}
                             </span>
-                            <span class="text-xs text-slate-400">({m.scouterCoverageCount} Scouters Available)</span>
+                            <span className="text-xs text-slate-400">({m.scouterCoverageCount} Scouters)</span>
                           </div>
-                          <h4 class="font-bold text-slate-100 text-base">{m.title}</h4>
-                          <p class="text-xs text-emerald-400">{m.theme}</p>
+                          <h4 className="font-bold text-slate-100 text-base">{m.title}</h4>
+                          <p className="text-xs text-emerald-400">{m.theme}</p>
                         </div>
 
-                        {/* Clean Status Indicator */}
-                        <div class="text-right">
+                        <div>
                           {m.actionRequired ? (
-                            <span class="inline-flex items-center gap-1 bg-rose-950 text-rose-300 border border-rose-800 text-xs px-2.5 py-1 rounded-full font-bold">
+                            <span className="bg-rose-950 text-rose-300 border border-rose-800 text-xs px-2.5 py-1 rounded-full font-bold">
                               ⚠️ Action Needed
                             </span>
                           ) : (
-                            <span class="inline-flex items-center gap-1 bg-emerald-950 text-emerald-300 border border-emerald-800 text-xs px-2.5 py-1 rounded-full font-bold">
+                            <span className="bg-emerald-950 text-emerald-300 border border-emerald-800 text-xs px-2.5 py-1 rounded-full font-bold">
                               ✓ Ready
                             </span>
                           )}
                         </div>
                       </div>
 
-                      {/* Expanded Meeting Details View */}
                       {selectedMeetingId === m.id && (
-                        <div class="bg-slate-900 p-4 border-t border-slate-700 space-y-4 text-xs">
-                          
-                          {/* Notice Banner */}
-                          <div class={`p-2.5 rounded-lg border ${m.actionRequired ? 'bg-rose-950/60 border-rose-800 text-rose-200' : 'bg-emerald-950/60 border-emerald-800 text-emerald-200'}`}>
+                        <div className="bg-slate-900 p-4 border-t border-slate-700 space-y-4 text-xs">
+                          <div className={`p-2.5 rounded-lg border ${m.actionRequired ? 'bg-rose-950/60 border-rose-800 text-rose-200' : 'bg-emerald-950/60 border-emerald-800 text-emerald-200'}`}>
                             <strong>Status Note:</strong> {m.actionNotice}
                           </div>
 
-                          {/* Scouter Station Signups */}
-                          <div class="space-y-2">
-                            <h5 class="font-bold text-amber-400 text-xs uppercase tracking-wider">Scouter Activity Station Leads</h5>
+                          <div className="space-y-2">
+                            <h5 className="font-bold text-amber-400 text-xs uppercase tracking-wider">Station Assignments</h5>
                             {m.stations.map((st) => (
-                              <div key={st.id} class="bg-slate-800 p-2.5 rounded-lg border border-slate-700 flex items-center justify-between">
-                                <span class="font-bold text-slate-200">{st.name}</span>
-                                <div class="flex items-center gap-2">
-                                  <span class={`font-mono text-[11px] ${st.assignedTo === 'Unassigned' ? 'text-amber-400 font-bold' : 'text-emerald-300'}`}>
+                              <div key={st.id} className="bg-slate-800 p-2.5 rounded-lg border border-slate-700 flex items-center justify-between">
+                                <span className="font-bold text-slate-200">{st.name}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className={`font-mono text-[11px] ${st.assignedTo === 'Unassigned' ? 'text-amber-400 font-bold' : 'text-emerald-300'}`}>
                                     {st.assignedTo}
                                   </span>
                                   {st.assignedTo === 'Unassigned' && (
                                     <button 
-                                      onClick={() => handleAssignStation(m.id, st.id, 'Akela (Scott)')}
-                                      class="bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-1 rounded text-[10px] font-bold"
+                                      onClick={() => handleAssignStation(m.id, st.id, 'Akela')}
+                                      className="bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-1 rounded text-[10px] font-bold"
                                     >
                                       Sign Up
                                     </button>
@@ -381,12 +353,250 @@
                             ))}
                           </div>
 
-                          {/* Scouter Action Items */}
-                          <div class="space-y-2 pt-1">
-                            <h5 class="font-bold text-amber-400 text-xs uppercase tracking-wider">Action Items & Prep Tasks</h5>
+                          <div className="space-y-2 pt-1">
+                            <h5 className="font-bold text-amber-400 text-xs uppercase tracking-wider">Action Items</h5>
                             {m.actionItems.map((act) => (
-                              <div key={act.id} class="bg-slate-800 p-2.5 rounded-lg border border-slate-700 flex items-center justify-between">
-                                <span class="text-slate-300">{act.task}</span>
-                                <div class="flex items-center gap-2">
-                                  <span class={`font-mono text-[11px] ${act.assignedTo === 'Unassigned' ? 'text-rose-400 font-bold' : 'text-slate-400'}`}>
-      
+                              <div key={act.id} className="bg-slate-800 p-2.5 rounded-lg border border-slate-700 flex items-center justify-between">
+                                <span className="text-slate-300">{act.task}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className={`font-mono text-[11px] ${act.assignedTo === 'Unassigned' ? 'text-rose-400 font-bold' : 'text-slate-400'}`}>
+                                    {act.assignedTo}
+                                  </span>
+                                  {act.assignedTo === 'Unassigned' && (
+                                    <button 
+                                      onClick={() => handleClaimTask(m.id, act.id, 'Akela')}
+                                      className="bg-amber-500 hover:bg-amber-400 text-slate-950 px-2 py-1 rounded text-[10px] font-bold"
+                                    >
+                                      Claim
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: LIVE */}
+            {activeTab === 'live' && (
+              <div className="space-y-4">
+                <button 
+                  onClick={() => setHelpModalOpen(true)}
+                  className="w-full bg-slate-800 hover:bg-slate-750 border-2 border-amber-500 text-amber-400 font-bold py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2 text-sm"
+                >
+                  <span>📢</span> CALL SCOUTER FOR HELP (Tap Options)
+                </button>
+
+                <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 text-center space-y-2">
+                  <div className="text-xs text-slate-400">Meeting Timer</div>
+                  <div className="text-5xl font-mono font-bold text-amber-400 tracking-wider">84:20</div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: BADGES */}
+            {activeTab === 'youth' && (
+              <div className="space-y-4">
+                <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 flex items-center justify-between">
+                  <div>
+                    <h4 className="font-bold text-xs text-slate-200">Scouter Admin Filter</h4>
+                    <p className="text-[10px] text-slate-400">Hide/enable badges for youth view</p>
+                  </div>
+                  <button 
+                    onClick={() => setScouterAdminMode(!scouterAdminMode)}
+                    className={`px-3 py-1.5 rounded-lg font-bold text-xs ${scouterAdminMode ? 'bg-amber-500 text-slate-950' : 'bg-slate-700 text-slate-300'}`}
+                  >
+                    {scouterAdminMode ? '✓ ADMIN MODE' : 'YOUTH VIEW'}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  {allBadges.map((badge) => {
+                    if (!scouterAdminMode && !badge.enabled) return null;
+                    return (
+                      <div key={badge.id} className={`border p-3 rounded-xl flex flex-col justify-between ${badge.enabled ? 'bg-slate-800 border-slate-700' : 'bg-slate-900 border-slate-800 opacity-50'}`}>
+                        <div>
+                          <span className="text-[10px] font-mono text-amber-400 uppercase">{badge.category}</span>
+                          <h4 className="font-bold text-xs text-slate-100 mt-0.5">{badge.name}</h4>
+                        </div>
+                        <div className="mt-3 flex items-center justify-between">
+                          <span className="text-xs font-mono text-emerald-400">{badge.votes} Votes</span>
+                          {scouterAdminMode ? (
+                            <button 
+                              onClick={() => toggleBadgeEnabled(badge.id)}
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold ${badge.enabled ? 'bg-rose-950 text-rose-300' : 'bg-emerald-950 text-emerald-300'}`}
+                            >
+                              {badge.enabled ? 'Hide' : 'Enable'}
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => handleYouthVote(badge.id)}
+                              className="bg-emerald-600 text-white px-2.5 py-1 rounded text-xs font-bold"
+                            >
+                              Vote 🗳️
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 5: PARENT LOGISTICS */}
+            {activeTab === 'parent' && (
+              <div className="space-y-4">
+                <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
+                  <h2 className="font-bold text-amber-400 text-sm flex items-center gap-2">
+                    <span>🚗</span> Camp Driving & Carpool Preferences
+                  </h2>
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <label className="text-slate-300 block mb-1">Max driving time willing to drive for camp?</label>
+                      <select 
+                        value={parentSurvey.maxDriveMinutes}
+                        onChange={(e) => setParentSurvey({ ...parentSurvey, maxDriveMinutes: Number(e.target.value) })}
+                        className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-slate-100 font-bold"
+                      >
+                        <option value={30}>Under 30 Minutes</option>
+                        <option value={60}>Up to 1 Hour</option>
+                        <option value={120}>Up to 2 Hours</option>
+                        <option value={180}>3+ Hours (Long Trips)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-slate-300 block mb-1">Carpool Seatbelt Offer?</label>
+                      <select 
+                        value={parentSurvey.canCarpool}
+                        onChange={(e) => setParentSurvey({ ...parentSurvey, canCarpool: e.target.value })}
+                        className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-slate-100 font-bold"
+                      >
+                        <option value="Yes, 3 extra seats">Yes — 3 extra seats</option>
+                        <option value="Yes, 1-2 extra seats">Yes — 1-2 extra seats</option>
+                        <option value="Self only">Own youth only</option>
+                        <option value="Need a ride">Need a carpool ride</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
+                  <h2 className="font-bold text-emerald-400 text-sm flex items-center gap-2">
+                    <span>🤝</span> Parent Volunteer Task Signups
+                  </h2>
+                  <div className="space-y-2 pt-1">
+                    {parentTaskOptions.map((task) => {
+                      const isSignedUp = parentSurvey.volunteeredTasks.includes(task);
+                      return (
+                        <button
+                          key={task}
+                          onClick={() => toggleParentTask(task)}
+                          className={`w-full p-3 rounded-xl border text-xs font-bold flex items-center justify-between transition ${isSignedUp ? 'bg-emerald-950 border-emerald-500 text-emerald-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}
+                        >
+                          <span>{task}</span>
+                          <span className="font-mono">{isSignedUp ? '✓ Signed Up' : '+ Volunteer'}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 6: SETTINGS */}
+            {activeTab === 'settings' && (
+              <div className="space-y-4">
+                <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3 text-xs">
+                  <h2 className="font-bold text-amber-400 text-sm">System Settings</h2>
+                  <div className="flex items-center justify-between pt-2">
+                    <span>Auto-Procurement Engine</span>
+                    <input type="checkbox" checked={flags.autoProcurement} onChange={(e) => setFlags({ ...flags, autoProcurement: e.target.checked })} className="w-4 h-4 accent-emerald-500" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </main>
+
+          {/* HELP MODAL */}
+          {helpModalOpen && (
+            <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-slate-800 border-2 border-amber-500 rounded-2xl p-5 max-w-sm w-full space-y-4 text-center">
+                <span className="text-4xl">📢</span>
+                <h3 className="font-bold text-lg text-amber-400">Scouter Assistance Request</h3>
+
+                {helpSentMessage ? (
+                  <div className="bg-emerald-950 border border-emerald-600 text-emerald-200 p-3 rounded-xl text-xs font-bold">
+                    {helpSentMessage}
+                  </div>
+                ) : (
+                  <div className="space-y-2 pt-1">
+                    <button 
+                      onClick={() => triggerHelpAlert('urgent')}
+                      className="w-full bg-rose-600 text-white font-bold py-3 rounded-xl text-xs"
+                    >
+                      🚨 URGENT: Come Right Now!
+                    </button>
+                    <button 
+                      onClick={() => triggerHelpAlert('routine')}
+                      className="w-full bg-amber-500 text-slate-950 font-bold py-3 rounded-xl text-xs"
+                    >
+                      🙋 ROUTINE: Wander Over When Free
+                    </button>
+                    <button 
+                      onClick={() => setHelpModalOpen(false)}
+                      className="w-full bg-slate-700 text-slate-300 font-bold py-2 rounded-xl text-xs"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Bottom Nav */}
+          <nav className="bg-slate-950 border-t border-slate-800 fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40 flex justify-around p-2">
+            <button onClick={() => setActiveTab('attendance')} className={`flex flex-col items-center py-1 px-1 rounded-lg ${activeTab === 'attendance' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}>
+              <span className="text-base">⛺</span>
+              <span className="text-[9px]">Arrive</span>
+            </button>
+            <button onClick={() => setActiveTab('planner')} className={`flex flex-col items-center py-1 px-1 rounded-lg ${activeTab === 'planner' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}>
+              <span className="text-base">📅</span>
+              <span className="text-[9px]">Planner</span>
+            </button>
+            <button onClick={() => setActiveTab('live')} className={`flex flex-col items-center py-1 px-1 rounded-lg ${activeTab === 'live' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}>
+              <span className="text-base">⏱️</span>
+              <span className="text-[9px]">Live</span>
+            </button>
+            <button onClick={() => setActiveTab('youth')} className={`flex flex-col items-center py-1 px-1 rounded-lg ${activeTab === 'youth' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}>
+              <span className="text-base">🗳️</span>
+              <span className="text-[9px]">Badges</span>
+            </button>
+            <button onClick={() => setActiveTab('parent')} className={`flex flex-col items-center py-1 px-1 rounded-lg ${activeTab === 'parent' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}>
+              <span className="text-base">👨‍👩‍👧</span>
+              <span className="text-[9px]">Parents</span>
+            </button>
+            <button onClick={() => setActiveTab('settings')} className={`flex flex-col items-center py-1 px-1 rounded-lg ${activeTab === 'settings' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}>
+              <span className="text-base">⚙️</span>
+              <span className="text-[9px]">Flags</span>
+            </button>
+          </nav>
+
+        </div>
+      );
+    }
+
+    const rootElement = document.getElementById('root');
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(<ScoutCommandApp />);
+  </script>
+</body>
+</html>
