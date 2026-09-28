@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ScoutCommand - Mission Control Test Mode</title>
+  <title>ScoutCommand - 1st Elmira Pack</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { -webkit-tap-highlight-color: transparent; }
@@ -60,7 +60,7 @@
           </button>
         </div>
         <div class="text-5xl my-2 drop-shadow-lg">🏕️</div>
-        <h3 class="font-bold text-amber-400 text-base">Present in the Tent (<span id="presentCount">0</span> / 8)</h3>
+        <h3 class="font-bold text-amber-400 text-base">Present in the Tent (<span id="presentCount">0</span> / <span id="totalCount">8</span>)</h3>
         <div id="presentList" class="flex flex-wrap justify-center gap-1.5 mt-3 max-h-28 overflow-y-auto no-scrollbar">
           <span class="text-xs text-emerald-500/70 italic font-mono">Awaiting arrivals...</span>
         </div>
@@ -72,6 +72,15 @@
           <span class="text-[10px] text-slate-500 font-mono"><span id="remainingCount">8</span> Remaining</span>
         </div>
         <div id="absentList" class="space-y-2"></div>
+      </div>
+
+      <!-- Add New Cub Form -->
+      <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2 mt-4 shadow-inner">
+        <h5 class="text-xs font-bold text-amber-400 uppercase tracking-wider">Add Cub to Roster</h5>
+        <div class="flex gap-2">
+          <input type="text" id="newCubName" placeholder="Cub Name..." class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-400">
+          <button onclick="addNewCub()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-lg text-xs shadow transition">Add</button>
+        </div>
       </div>
     </div>
 
@@ -269,9 +278,9 @@
     <button onclick="switchTab('settings')" id="nav-settings" class="flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-slate-500"><span class="text-base mb-0.5">⚙️</span><span class="text-[9px] uppercase tracking-wider font-bold">Config</span></button>
   </nav>
 
-  <!-- NATIVE JAVASCRIPT ENGINE -->
+  <!-- NATIVE JAVASCRIPT ENGINE (INSTANT GLOBAL BINDINGS) -->
   <script>
-    let state = {
+    window.state = {
       tab: 'attendance',
       currentUser: 'Akela',
       adminMode: false,
@@ -287,16 +296,4 @@
         { id: 7, name: 'Charlotte S.', rank: 7, status: 'absent' },
         { id: 8, name: 'Noah T.', rank: 8, status: 'absent' }
       ],
-      history: [],
-      animatingId: null,
-      activityIdx: 0,
-      schedule: [
-        { name: 'Knot Relay', dur: '10 min', desc: 'Run relay races tying square knots in the field.' },
-        { name: 'Rotations A', dur: '25 min', desc: 'Group 1: Bearings. Group 2: Cobra weaves.' },
-        { name: 'Rotations B', dur: '25 min', desc: 'Groups switch stations and start new activity.' },
-        { name: 'Closing', dur: '10 min', desc: 'Hand out badges, lower flag, parent dismissal.' }
-      ],
-      badges: [
-        { id: 'b1', name: 'Camping OAS', cat: 'Outdoor', votes: 15, enabled: true },
-        { id: 'b2', name: 'Trail Skills OAS', cat: 'Outdoor', votes: 12, enabled: true },
-        { id: 'b6', name: 'Space Explorer', cat: '
+      scouters: ['Ake
