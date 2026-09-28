@@ -71,9 +71,7 @@
           <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tap to Check In</h4>
           <span class="text-[10px] text-slate-500 font-mono"><span id="remainingCount">8</span> Remaining</span>
         </div>
-        <div id="absentList" class="space-y-2">
-          <!-- Populated via plain JS -->
-        </div>
+        <div id="absentList" class="space-y-2"></div>
       </div>
     </div>
 
@@ -94,7 +92,7 @@
           <span class="bg-emerald-900/80 text-emerald-300 font-mono text-[9px] px-2 py-0.5 rounded border border-emerald-700">Confidence: 98.4%</span>
         </div>
 
-        <!-- AI Boot Sequence Terminal (Hidden by default) -->
+        <!-- AI Boot Sequence Terminal -->
         <div id="aiTerminal" class="hidden space-y-3 relative z-10 py-2">
           <div class="flex justify-between text-[10px] text-emerald-300 font-mono uppercase tracking-widest">
             <span id="aiProgressText">Analyzing Weather & Facility Parameters...</span>
@@ -108,24 +106,21 @@
           </div>
         </div>
 
-        <!-- AI Control Form -->
+        <!-- AI Control Form (Auto-suggests property zone based on parameters) -->
         <div id="aiControls" class="space-y-3 relative z-10">
-          <div class="space-y-1 text-xs">
-            <label class="text-slate-400 block font-mono text-[10px] uppercase">Primary Facility Zone:</label>
-            <select id="propertyZone" class="w-full bg-slate-950/80 border border-emerald-700/50 rounded-lg p-3 text-emerald-50 font-bold focus:outline-none focus:border-emerald-400 shadow-inner text-sm">
-              <option value="Outdoor Back Field">🌲 75 Oriole Pkwy - Outdoor Back Field</option>
-              <option value="Main Gym / Hall">🏫 75 Oriole Pkwy - Main Gym / Hall</option>
-            </select>
+          <div class="bg-slate-950/60 p-3 rounded-xl border border-emerald-900/60 text-xs space-y-1 font-mono">
+            <span class="text-emerald-400 font-bold block">💡 AI Environmental Suggestion:</span>
+            <span id="aiSuggestionText" class="text-slate-300">Analyzing current season & active badge goals for 75 Oriole Pkwy...</span>
           </div>
           <button onclick="runMissionAI()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black tracking-widest text-xs py-4 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] uppercase border border-emerald-300">
-            <span>✨</span> REGENERATE SEASON MISSION PLAN
+            <span>✨</span> AUTO-OPTIMIZE SEASON & PROPERTY ZONE
           </button>
         </div>
       </div>
 
       <!-- Generated Timeline & Activity Plan -->
       <div class="space-y-3">
-        <h3 class="font-bold text-slate-300 text-xs uppercase tracking-widest px-1">Generated Season Timeline</h3>
+        <h3 class="font-bold text-slate-300 text-xs uppercase tracking-widest px-1">Optimized Property Timeline</h3>
         <div class="space-y-2">
           <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-2 shadow-md">
             <div class="flex justify-between items-center">
@@ -133,24 +128,16 @@
               <span class="bg-emerald-950 text-emerald-300 border border-emerald-800 text-[9px] px-2 py-0.5 rounded font-bold uppercase">Confidence: 99%</span>
             </div>
             <h4 class="font-bold text-slate-100 text-sm">Paracord Navigation & Compass Vector</h4>
-            <p class="text-[11px] text-emerald-400 font-mono">📍 75 Oriole Pkwy - Outdoor Back Field</p>
-            <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-[11px] text-slate-300 space-y-1">
-              <p>• <strong>Station 1:</strong> Compass Bearings (Lead: Baloo)</p>
-              <p>• <strong>Station 2:</strong> Cobra Weaving (Lead: Unassigned)</p>
-            </div>
+            <p class="text-[11px] text-emerald-400 font-mono">📍 75 Oriole Pkwy — Outdoor Back Field (Suggested: Clear weather, ideal for tracking)</p>
           </div>
 
           <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-2 shadow-md">
             <div class="flex justify-between items-center">
-              <span class="text-[10px] font-mono text-amber-400 bg-amber-950/50 px-2 py-0.5 rounded border border-amber-800 uppercase">Oct 20, 2026</span>
+              <span class="text-[10px] font-mono text-amber-400 bg-amber-950/50 px-2 py-0.5 rounded border border-amber-800 uppercase">Nov 10, 2026</span>
               <span class="bg-emerald-950 text-emerald-300 border border-emerald-800 text-[9px] px-2 py-0.5 rounded font-bold uppercase">Confidence: 97%</span>
             </div>
-            <h4 class="font-bold text-slate-100 text-sm">Campfire Safety & Edible Fires</h4>
-            <p class="text-[11px] text-emerald-400 font-mono">📍 75 Oriole Pkwy - Outdoor Fire Pit Zone</p>
-            <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-[11px] text-slate-300 space-y-1">
-              <p>• <strong>Station 1:</strong> Pretzel Fires (Lead: Bagheera)</p>
-              <p>• <strong>Station 2:</strong> Spark Safety (Lead: Akela)</p>
-            </div>
+            <h4 class="font-bold text-slate-100 text-sm">Kub Kar Prep & Friction Experiments</h4>
+            <p class="text-[11px] text-emerald-400 font-mono">📍 75 Oriole Pkwy — Scout Hall Main Room (Suggested: Cold/wet weather override)</p>
           </div>
         </div>
       </div>
@@ -170,14 +157,6 @@
           </div>
           <p class="text-xs text-emerald-400 font-mono">📍 Blue Springs Scout Reserve (5/5 Scouters)</p>
           <p class="text-[11px] text-slate-300">Facility: Unheated Cabin & Tenting Field (45 mins from Elmira)</p>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-2">
-          <div class="flex justify-between items-center">
-            <span class="font-bold text-slate-100 text-sm">Nov 21–22, 2026</span>
-            <span class="bg-amber-500 text-slate-950 font-black text-[9px] px-2 py-0.5 rounded uppercase tracking-wider">⭐ Optimal Pick</span>
-          </div>
-          <p class="text-xs text-emerald-400 font-mono">📍 Laurel Creek Group Lodge (4/5 Scouters)</p>
-          <p class="text-[11px] text-slate-300">Facility: Heated Group Lodge (15 mins from Elmira)</p>
         </div>
       </div>
     </div>
@@ -212,9 +191,7 @@
         </div>
       </div>
 
-      <div id="akelaButtonContainer">
-        <!-- Rendered via JS based on current role -->
-      </div>
+      <div id="akelaButtonContainer"></div>
     </div>
 
     <!-- TAB 5: BUY -->
@@ -250,9 +227,7 @@
           YOUTH VIEW
         </button>
       </div>
-      <div class="grid grid-cols-2 gap-3" id="badgeGrid">
-        <!-- Populated via JS -->
-      </div>
+      <div class="grid grid-cols-2 gap-3" id="badgeGrid"></div>
     </div>
 
     <!-- TAB 7: SETTINGS -->
@@ -302,4 +277,23 @@
     <button onclick="switchTab('attendance')" id="nav-attendance" class="flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-amber-400 font-bold bg-slate-900 shadow-inner"><span class="text-base mb-0.5">⛺</span><span class="text-[9px] uppercase tracking-wider font-bold">Arrive</span></button>
     <button onclick="switchTab('planner')" id="nav-planner" class="flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-slate-500"><span class="text-base mb-0.5">🧠</span><span class="text-[9px] uppercase tracking-wider font-bold">AI Plan</span></button>
     <button onclick="switchTab('camps')" id="nav-camps" class="flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-slate-500"><span class="text-base mb-0.5">🏕️</span><span class="text-[9px] uppercase tracking-wider font-bold">Camps</span></button>
-    <button onclick="switchTab('live')" id="nav-live" class="flex flex-col items-center py-1.5 px-3 rounded-lg
+    <button onclick="switchTab('live')" id="nav-live" class="flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-slate-500"><span class="text-base mb-0.5">⏱️</span><span class="text-[9px] uppercase tracking-wider font-bold">Live</span></button>
+    <button onclick="switchTab('buy')" id="nav-buy" class="flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-slate-500"><span class="text-base mb-0.5">🛒</span><span class="text-[9px] uppercase tracking-wider font-bold">Buy</span></button>
+    <button onclick="switchTab('badges')" id="nav-badges" class="flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-slate-500"><span class="text-base mb-0.5">🗳️</span><span class="text-[9px] uppercase tracking-wider font-bold">Badges</span></button>
+    <button onclick="switchTab('settings')" id="nav-settings" class="flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-slate-500"><span class="text-base mb-0.5">⚙️</span><span class="text-[9px] uppercase tracking-wider font-bold">Config</span></button>
+  </nav>
+
+  <!-- NATIVE JAVASCRIPT ENGINE -->
+  <script>
+    let state = {
+      tab: 'attendance',
+      currentUser: 'Akela',
+      adminMode: false,
+      budgetCrafts: 184.51,
+      orderApproved: false,
+      cubs: [
+        { id: 1, name: 'Benjamin H.', rank: 1, status: 'absent' },
+        { id: 2, name: 'Brookie H.', rank: 2, status: 'absent' },
+        { id: 3, name: 'Owen H.', rank: 3, status: 'absent' },
+        { id: 4, name: 'Rory M.', rank: 4, status: 'absent' },
+        { id: 5, name: 'Logan K.', r
