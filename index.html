@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ScoutCommand - Mobile Scouter Hub</title>
+  <title>ScoutCommand - Lightning Edition</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <!-- Alpine.js (15kb, Zero Compilation, Instant Load) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
   <style>
     body { -webkit-tap-highlight-color: transparent; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -27,282 +26,278 @@
     .animate-siren { animation: sirenFlash 0.8s infinite; }
 
     @keyframes pulseGlow {
-      0%, 100% { box-shadow: 0 0 10px #34d399, inset 0 0 10px #34d399; }
-      50% { box-shadow: 0 0 25px #10b981, inset 0 0 20px #10b981; }
+      0%, 100% { box-shadow: 0 0 15px #34d399, inset 0 0 10px #34d399; }
+      50% { box-shadow: 0 0 35px #10b981, inset 0 0 25px #10b981; }
     }
-    .ai-glow { animation: pulseGlow 2s infinite; }
+    .ai-glow { animation: pulseGlow 1.5s infinite; }
+
+    @keyframes radarScan {
+      0% { transform: translateY(-100%); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateY(100%); opacity: 0; }
+    }
+    .animate-scan { animation: radarScan 2s linear infinite; }
+    [x-cloak] { display: none !important; }
   </style>
 </head>
-<body className="bg-slate-950 text-slate-100 min-h-screen font-sans pb-24">
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans pb-24" x-data="scoutApp()" x-cloak>
 
-  <div id="root">
-    <div className="flex flex-col items-center justify-center min-h-screen text-slate-400 text-sm font-mono space-y-3">
-      <div className="text-3xl animate-bounce">⚜️</div>
-      <div>Loading ScoutCommand...</div>
+  <!-- Header Bar -->
+  <header class="bg-emerald-950 border-b border-emerald-800 p-4 sticky top-0 z-30 flex items-center justify-between shadow-lg">
+    <div class="flex items-center space-x-2">
+      <span class="text-2xl">⚜️</span>
+      <div>
+        <h1 class="font-bold text-amber-400 text-lg leading-tight">ScoutCommand</h1>
+        <p class="text-[10px] text-emerald-300 uppercase tracking-widest">1st Elmira Cub Pack</p>
+      </div>
     </div>
-  </div>
+    <span class="bg-emerald-900 text-emerald-200 text-[10px] px-2.5 py-1 rounded-full border border-emerald-700 font-mono shadow-inner">
+      Role: <span x-text="user"></span>
+    </span>
+  </header>
 
-  <script type="text/babel">
-    const { useState, useEffect } = React;
+  <main class="p-4 space-y-4">
 
-    function ScoutCommandApp() {
-      const [activeTab, setActiveTab] = useState('planner');
-      const [currentUser, setCurrentUser] = useState('Akela'); 
-      const [flags, setFlags] = useState({ autoProcurement: true, youthVote: true, weatherPivot: true, betaSync: false });
-      const [budget, setBudget] = useState({ crafts: 184.51, outings: 420.00, badges: 110.00 });
-      const [orderApproved, setOrderApproved] = useState(false);
+    <!-- TAB 1: ATTENDANCE -->
+    <div x-show="tab === 'attendance'" x-transition.opacity.duration.300ms class="space-y-4">
+      <div class="bg-emerald-950 border-2 border-emerald-600 rounded-2xl p-4 text-center relative overflow-hidden shadow-[0_4px_20px_rgba(16,185,129,0.15)]">
+        <div class="flex justify-between items-center mb-1">
+          <span class="text-xs font-mono text-emerald-400">CHECK-IN STATION</span>
+          <button @click="undoCheckIn()" :disabled="history.length === 0" :class="history.length > 0 ? 'bg-amber-500 text-slate-950 border-amber-400 shadow' : 'bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed'" class="text-xs px-2.5 py-1 rounded-lg border font-bold flex items-center gap-1 transition-all">
+            ↩️ Undo Last
+          </button>
+        </div>
+        <div class="text-5xl my-2 drop-shadow-lg">🏕️</div>
+        <h3 class="font-bold text-amber-400 text-base">Present in the Tent (<span x-text="presentCubs.length"></span> / <span x-text="cubs.length"></span>)</h3>
+        <div class="flex flex-wrap justify-center gap-1.5 mt-3 max-h-28 overflow-y-auto no-scrollbar">
+          <template x-if="presentCubs.length === 0">
+            <span class="text-xs text-emerald-500/70 italic font-mono">Awaiting arrivals...</span>
+          </template>
+          <template x-for="c in presentCubs" :key="c.id">
+            <span class="bg-emerald-800 border border-emerald-500 text-emerald-50 text-[11px] px-2.5 py-1 rounded-full font-bold shadow-sm" x-text="'✓ ' + c.name"></span>
+          </template>
+        </div>
+      </div>
 
-      // 1. ATTENDANCE STATE
-      const [cubRoster, setCubRoster] = useState([
-        { id: 1, name: 'Benjamin H.', arrivalRank: 1, status: 'absent' },
-        { id: 2, name: 'Brookie H.', arrivalRank: 2, status: 'absent' },
-        { id: 3, name: 'Owen H.', arrivalRank: 3, status: 'absent' },
-        { id: 4, name: 'Rory M.', arrivalRank: 4, status: 'absent' },
-        { id: 5, name: 'Logan K.', arrivalRank: 5, status: 'absent' },
-        { id: 6, name: 'Liam P.', arrivalRank: 6, status: 'absent' },
-        { id: 7, name: 'Charlotte S.', arrivalRank: 7, status: 'absent' },
-        { id: 8, name: 'Noah T.', arrivalRank: 8, status: 'absent' }
-      ]);
-      const [animatingId, setAnimatingId] = useState(null);
-      const [attendanceHistory, setAttendanceHistory] = useState([]);
+      <div class="space-y-2">
+        <div class="flex justify-between items-center">
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tap to Check In</h4>
+          <span class="text-[10px] text-slate-500 font-mono"><span x-text="absentCubs.length"></span> Remaining</span>
+        </div>
+        
+        <template x-if="absentCubs.length === 0">
+          <div class="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center text-emerald-400 font-bold text-sm shadow-inner">🎉 All Cubs have arrived!</div>
+        </template>
+        
+        <div class="space-y-2">
+          <template x-for="cub in absentCubs" :key="cub.id">
+            <button @click="checkIn(cub.id)" :class="{'animate-fly border-emerald-400 bg-emerald-900/80': animatingId === cub.id}" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 p-3.5 rounded-xl text-left flex items-center justify-between transition-all duration-300 shadow-sm relative overflow-hidden">
+              <div class="flex items-center space-x-3">
+                <span class="w-6 h-6 rounded-full bg-slate-900 border border-slate-700 text-amber-400 font-mono text-[10px] flex items-center justify-center font-bold shadow-inner" x-text="'#' + cub.rank"></span>
+                <span class="font-bold text-slate-100 text-sm tracking-wide" x-text="cub.name"></span>
+              </div>
+              <span class="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800 px-3 py-1 rounded-lg font-bold uppercase tracking-wider">Arrive ⛺</span>
+            </button>
+          </template>
+        </div>
+      </div>
+    </div>
 
-      const handleCheckIn = (id) => {
-        setAnimatingId(id);
-        setTimeout(() => {
-          setCubRoster(prev => prev.map(c => c.id === id ? { ...c, status: 'present' } : c));
-          setAttendanceHistory(prev => [...prev, id]);
-          setAnimatingId(null);
-        }, 400);
-      };
-      const handleUndoAttendance = () => {
-        if (attendanceHistory.length === 0) return;
-        const lastId = attendanceHistory[attendanceHistory.length - 1];
-        setCubRoster(prev => prev.map(c => c.id === lastId ? { ...c, status: 'absent' } : c));
-        setAttendanceHistory(prev => prev.slice(0, -1));
-      };
+    <!-- TAB 2: UNREAL AI PLANNER -->
+    <div x-show="tab === 'planner'" x-transition.opacity.duration.300ms class="space-y-4">
+      
+      <!-- Mind-Blowing Gemini Engine UI -->
+      <div :class="isAIPlanning ? 'border-emerald-400 ai-glow bg-emerald-950/40' : 'border-emerald-800 bg-gradient-to-br from-slate-900 to-emerald-950/30'" class="border-2 rounded-2xl p-5 space-y-4 shadow-2xl relative overflow-hidden transition-all duration-500">
+        <!-- Holographic Background Elements -->
+        <div class="absolute top-0 right-0 p-3 opacity-10 text-7xl transform rotate-12">✨</div>
+        <div x-show="isAIPlanning" class="absolute inset-0 bg-emerald-500/10 animate-scan"></div>
+        
+        <div class="flex justify-between items-center relative z-10">
+          <div>
+            <h2 class="font-black text-emerald-400 text-lg flex items-center gap-2 tracking-wide">
+              <span :class="isAIPlanning ? 'animate-spin' : ''" class="inline-block">🧠</span> Gemini Core
+            </h2>
+            <p class="text-[10px] text-emerald-200/70 font-mono uppercase">75 Oriole Pkwy Environment Optimizer</p>
+          </div>
+        </div>
 
-      // 2. UNREAL AI PLANNER ENGINE
-      const [isAIPlanning, setIsAIPlanning] = useState(false);
-      const [aiStep, setAiStep] = useState(0);
-      const aiStatusMessages = [
-        "Initializing Gemini Planning Engine...",
-        "Analyzing Elmira historical weather patterns for Oct/Nov...",
-        "Cross-referencing youth badge gaps in ScoutsTracker...",
-        "Balancing 75 Oriole Pkwy facility zones with Scouter ratios...",
-        "Generating optimal season program..."
-      ];
+        <template x-if="isAIPlanning">
+          <div class="space-y-4 relative z-10 py-4">
+            <div class="flex justify-between text-[10px] text-emerald-300 font-mono uppercase tracking-widest">
+              <span x-text="Math.floor((aiStep / aiMessages.length) * 100) + '% Synthesized'"></span>
+              <span class="animate-pulse text-amber-400">Processing Variables...</span>
+            </div>
+            
+            <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden shadow-inner border border-slate-800">
+              <div class="bg-emerald-400 h-1.5 rounded-full transition-all duration-300 shadow-[0_0_10px_#34d399]" :style="'width: ' + ((aiStep / aiMessages.length) * 100) + '%'"></div>
+            </div>
+            
+            <!-- Terminal Output -->
+            <div class="bg-slate-950/80 rounded-lg p-3 border border-emerald-900/50 shadow-inner h-16 flex items-center justify-center">
+              <p class="text-[10px] text-emerald-400 font-mono text-center tracking-wide" x-text="aiMessages[aiStep]"></p>
+            </div>
+          </div>
+        </template>
 
-      const triggerAISeasonPlan = () => {
-        setIsAIPlanning(true);
-        setAiStep(0);
-        let step = 0;
-        const interval = setInterval(() => {
-          step++;
-          setAiStep(step);
-          if (step >= aiStatusMessages.length) {
-            clearInterval(interval);
-            setTimeout(() => setIsAIPlanning(false), 800);
-          }
-        }, 1200);
-      };
+        <template x-if="!isAIPlanning">
+          <div class="space-y-4 relative z-10">
+            <div class="space-y-2 text-xs">
+              <label class="text-slate-400 block font-mono text-[10px] uppercase">Property Zone Lock:</label>
+              <select x-model="propertyZone" class="w-full bg-slate-950/80 border border-emerald-700/50 rounded-lg p-3 text-emerald-50 font-bold focus:outline-none focus:border-emerald-400 shadow-inner appearance-none text-sm">
+                <option value="Outdoor Back Field">🌲 Outdoor Back Field (Auto-Select Sept/Oct)</option>
+                <option value="Main Gym / Hall">🏫 Main Gym / Hall (Auto-Select Nov/Dec)</option>
+              </select>
+            </div>
+            <button @click="runAI()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black tracking-widest text-xs py-4 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] uppercase border border-emerald-300">
+              <span>✨</span> Generate Season Vector
+            </button>
+          </div>
+        </template>
+      </div>
 
-      const [selectedMeetingId, setSelectedMeetingId] = useState(null);
-      const [propertyZone, setPropertyZone] = useState('Outdoor Back Field');
-      const [meetings, setMeetings] = useState([
-        {
-          id: 1, date: 'Oct 13, 2026', title: 'Paracord & Compass Navigation', theme: 'Trail Skills OAS Stage 2', location: '75 Oriole Pkwy - Outdoor Back Field', weatherNote: 'Clear, 14°C (Ideal for outdoor compass course)', actionRequired: true, actionNotice: 'Need Scouter to purchase buckles & prep paracord', scouterCoverageCount: 4,
-          stations: [ { id: 's1', name: 'Station A: Compass Bearings', assignedTo: 'Baloo' }, { id: 's2', name: 'Station B: Paracord Weaving', assignedTo: 'Unassigned' } ],
-          actionItems: [ { id: 'a1', task: 'Buy 100ft paracord from Amazon', assignedTo: 'Unassigned' } ]
-        },
-        {
-          id: 2, date: 'Oct 20, 2026', title: 'Campfire Safety & Edible Fires', theme: 'Bushcraft OAS Stage 1', location: '75 Oriole Pkwy - Outdoor Fire Pit Zone', weatherNote: 'Cool, 9°C (Campfire approved)', actionRequired: false, actionNotice: 'All supplies & station leads confirmed', scouterCoverageCount: 4,
-          stations: [ { id: 's4', name: 'Station A: Pretzel Fire Building', assignedTo: 'Bagheera' }, { id: 's5', name: 'Station B: Spark Lighting Safety', assignedTo: 'Akela' } ],
-          actionItems: [ { id: 'a3', task: 'Bring pretzel sticks & marshmallows', assignedTo: 'Akela' } ]
-        }
-      ]);
-
-      const handleAssignStation = (meetingId, stationId, scouterName) => {
-        setMeetings(prev => prev.map(m => { if (m.id !== meetingId) return m; return { ...m, stations: m.stations.map(st => st.id === stationId ? { ...st, assignedTo: scouterName } : st) }; }));
-      };
-      const handleClaimTask = (meetingId, taskId, scouterName) => {
-        setMeetings(prev => prev.map(m => { if (m.id !== meetingId) return m; return { ...m, actionItems: m.actionItems.map(a => a.id === taskId ? { ...a, assignedTo: scouterName } : a) }; }));
-      };
-
-      // 3. CAMPS PLANNER (3-Week Spacing)
-      const [selectedCampId, setSelectedCampId] = useState(null);
-      const [campWeekends] = useState([
-        { id: 'c1', date: 'Oct 17–18, 2026', month: 'October', scouterScore: '2/5 Scouters', isBestPick: false, campsiteRec: 'Laurel Creek Conservation Area', accomType: 'Tenting Field', driveTime: '15 mins', weatherForecast: '12°C Day / 4°C Night', activities: 'Compass trail, leaf ID', gapNotice: 'Back-to-back with Oct 24.' },
-        { id: 'c2', date: 'Oct 24–25, 2026', month: 'October', scouterScore: '5/5 Scouters', isBestPick: true, campsiteRec: 'Blue Springs Scout Reserve', accomType: 'Unheated Cabin', driveTime: '45 mins', weatherForecast: '10°C Day / 2°C Night', activities: 'Orienteering, pioneering', gapNotice: '⭐ Optimal October Camp (Full Leadership)' },
-        { id: 'c3', date: 'Nov 07–08, 2026', month: 'November', scouterScore: '3/5 Scouters', isBestPick: false, campsiteRec: 'Camp Cataraqui', accomType: 'Heated Bunkhouse Cabin', driveTime: '30 mins', weatherForecast: '5°C Day / -2°C Night', activities: 'Night compass trail', gapNotice: 'Only 2 weeks after Oct 24 camp.' },
-        { id: 'c4', date: 'Nov 21–22, 2026', month: 'November', scouterScore: '4/5 Scouters', isBestPick: true, campsiteRec: 'Laurel Creek Group Lodge', accomType: 'Heated Group Lodge', driveTime: '15 mins', weatherForecast: '3°C Day / -3°C Night', activities: 'Indoor STEM survival', gapNotice: '⭐ Optimal November Camp (4 Weeks Spacing)' }
-      ]);
-
-      // 4. LIVE MEETING STATE
-      const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
-      const [rotationAlert, setRotationAlert] = useState(false);
-      const liveSchedule = [
-        { name: 'Gathering: Knot Relay', duration: '10 min', desc: 'Run relay races tying square knots in the field.' },
-        { name: 'Rotations A: Compass / Paracord', duration: '25 min', desc: 'Group 1: Bearings. Group 2: Cobra weaves.' },
-        { name: 'Rotations B: Swap Stations', duration: '25 min', desc: 'Groups switch stations and start new activity.' },
-        { name: 'Closing & Announcements', duration: '10 min', desc: 'Hand out badges, lower flag, parent dismissal.' }
-      ];
-
-      const handleNextActivity = () => {
-        if (currentActivityIndex < liveSchedule.length - 1) {
-          setCurrentActivityIndex(prev => prev + 1);
-          setRotationAlert(true);
-          if (navigator.vibrate) { navigator.vibrate([300, 100, 300, 100, 600]); }
-          setTimeout(() => setRotationAlert(false), 4000);
-        }
-      };
-
-      const [helpModalOpen, setHelpModalOpen] = useState(false);
-      const [helpSentMessage, setHelpSentMessage] = useState(null);
-      const triggerHelpAlert = (level) => {
-        setHelpSentMessage(level === 'urgent' ? '🚨 URGENT: Leaders notified to come immediately!' : '🙋 ROUTINE: Leaders notified to drop by when free.');
-        setTimeout(() => { setHelpModalOpen(false); setHelpSentMessage(null); }, 2000);
-      };
-
-      // 5. BADGES STATE
-      const [scouterAdminMode, setScouterAdminMode] = useState(false);
-      const [allBadges, setAllBadges] = useState([
-        { id: 'b1', name: 'Camping OAS', category: 'Outdoor Adventure', votes: 15, enabled: true },
-        { id: 'b2', name: 'Trail Skills OAS', category: 'Outdoor Adventure', votes: 12, enabled: true },
-        { id: 'b6', name: 'Space Explorer', category: 'Personal Achievement', votes: 11, enabled: true }
-      ]);
-      const toggleBadgeEnabled = (id) => { setAllBadges(prev => prev.map(b => b.id === id ? { ...b, enabled: !b.enabled } : b)); };
-      const handleYouthVote = (id) => { setAllBadges(prev => prev.map(b => b.id === id ? { ...b, votes: b.votes + 1 } : b)); };
-
-      // 6. PARENT LOGISTICS STATE
-      const [parentSurvey, setParentSurvey] = useState({ maxDriveMinutes: 60, canCarpool: 'Yes, 3 extra seats', volunteeredTasks: [] });
-      const parentTaskOptions = ['🔥 Fill Propane Tanks', '🛒 Pick up Craft Supplies', '🍕 Snack Prep', '🧹 Hall Cleanup'];
-      const toggleParentTask = (task) => {
-        setParentSurvey(prev => ({ ...prev, volunteeredTasks: prev.volunteeredTasks.includes(task) ? prev.volunteeredTasks.filter(t => t !== task) : [...prev.volunteeredTasks, task] }));
-      };
-
-      const handleApproveOrder = () => { if (!orderApproved) { setBudget(prev => ({ ...prev, crafts: prev.crafts - 15.49 })); setOrderApproved(true); } };
-
-      const absentCubs = cubRoster.filter(c => c.status === 'absent').sort((a,b) => a.arrivalRank - b.arrivalRank);
-      const presentCubs = cubRoster.filter(c => c.status === 'present');
-
-      return (
-        <div className="max-w-md mx-auto min-h-screen bg-slate-900 shadow-2xl relative flex flex-col">
-          
-          <header className="bg-emerald-950 border-b border-emerald-800 p-4 sticky top-0 z-30 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <span className="text-2xl">⚜️</span>
-              <div>
-                <h1 className="font-bold text-amber-400 text-lg leading-tight">ScoutCommand</h1>
-                <p className="text-xs text-emerald-300">1st Elmira Cub Pack</p>
+      <div class="space-y-3">
+        <h3 class="font-bold text-slate-300 text-xs uppercase tracking-widest px-1">Meeting Vectors</h3>
+        
+        <template x-for="m in meetings" :key="m.id">
+          <div class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-md transition-all duration-300" :class="selectedMeeting === m.id ? 'border-amber-500/50' : ''">
+            
+            <div @click="selectedMeeting = selectedMeeting === m.id ? null : m.id" class="p-4 cursor-pointer flex justify-between hover:bg-slate-750 transition relative overflow-hidden">
+              <div class="space-y-1.5 z-10">
+                <span class="text-[10px] font-mono text-amber-400 bg-amber-950/50 px-2 py-0.5 rounded border border-amber-800/50 uppercase" x-text="m.date"></span>
+                <h4 class="font-bold text-slate-100 text-[15px] tracking-wide" x-text="m.title"></h4>
+                <p class="text-[10px] text-emerald-400 uppercase tracking-wider font-bold" x-text="m.theme"></p>
+                <p class="text-[11px] text-slate-400 flex items-center gap-1 font-mono mt-1">📍 <span x-text="m.location"></span></p>
+              </div>
+              <div class="z-10">
+                <template x-if="m.actionRequired">
+                  <span class="bg-rose-950/80 text-rose-300 border border-rose-800 text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider shadow">⚠️ Action</span>
+                </template>
+                <template x-if="!m.actionRequired">
+                  <span class="bg-emerald-950/80 text-emerald-300 border border-emerald-800 text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider shadow">✓ Ready</span>
+                </template>
               </div>
             </div>
-            <span className="bg-emerald-900 text-emerald-200 text-[10px] px-2.5 py-1 rounded-full border border-emerald-700 font-mono">
-              Role: {currentUser}
-            </span>
-          </header>
 
-          <main className="flex-1 p-4 space-y-4 overflow-y-auto no-scrollbar pb-24">
-
-            {/* TAB 1: ATTENDANCE */}
-            {activeTab === 'attendance' && (
-              <div className="space-y-4">
-                <div className="bg-emerald-950 border-2 border-emerald-600 rounded-2xl p-4 text-center relative overflow-hidden shadow-xl">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-xs font-mono text-emerald-400">CHECK-IN STATION</span>
-                    <button onClick={handleUndoAttendance} disabled={attendanceHistory.length === 0} className={`text-xs px-2.5 py-1 rounded-lg border font-bold flex items-center gap-1 ${attendanceHistory.length > 0 ? 'bg-amber-500 text-slate-950 border-amber-400 shadow' : 'bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed'}`}>
-                      ↩️ Undo Last
-                    </button>
-                  </div>
-                  <div className="text-5xl my-2">🏕️</div>
-                  <h3 className="font-bold text-amber-400 text-base">Present in the Tent ({presentCubs.length} / {cubRoster.length})</h3>
-                  <div className="flex flex-wrap justify-center gap-1.5 mt-3 max-h-28 overflow-y-auto no-scrollbar">
-                    {presentCubs.length === 0 ? <span className="text-xs text-emerald-500 italic">No Cubs checked in yet...</span> : presentCubs.map(c => <span key={c.id} className="bg-emerald-800 border border-emerald-600 text-emerald-100 text-xs px-2.5 py-1 rounded-full font-bold shadow-sm">✓ {c.name}</span>)}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tap to Check In (By Typical Arrival)</h4>
-                    <span className="text-[10px] text-slate-500 font-mono">{absentCubs.length} Remaining</span>
-                  </div>
-                  {absentCubs.length === 0 ? <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center text-emerald-400 font-bold text-sm">🎉 All Cubs have arrived!</div> : (
-                    <div className="space-y-2">
-                      {absentCubs.map((cub) => {
-                        const isAnimating = animatingId === cub.id;
-                        return (
-                          <button key={cub.id} onClick={() => handleCheckIn(cub.id)} className={`w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 p-3.5 rounded-xl text-left flex items-center justify-between transition-all duration-300 shadow-sm ${isAnimating ? 'animate-fly border-emerald-400 bg-emerald-900/80' : ''}`}>
-                            <div className="flex items-center space-x-3">
-                              <span className="w-6 h-6 rounded-full bg-slate-900 border border-slate-700 text-amber-400 font-mono text-xs flex items-center justify-center font-bold">#{cub.arrivalRank}</span>
-                              <span className="font-bold text-slate-100 text-sm">{cub.name}</span>
-                            </div>
-                            <span className="text-xs bg-emerald-950 text-emerald-300 border border-emerald-800 px-3 py-1 rounded-lg font-bold">Touch to Arrive ⛺</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+            <div x-show="selectedMeeting === m.id" x-transition class="bg-slate-900 p-4 border-t border-slate-700 space-y-4 text-xs">
+              <div :class="m.actionRequired ? 'bg-rose-950/30 border-rose-800/50 text-rose-200' : 'bg-emerald-950/30 border-emerald-800/50 text-emerald-200'" class="p-3 rounded-lg border text-[11px] leading-relaxed">
+                <strong class="uppercase tracking-wider">Status Note:</strong> <span x-text="m.actionNotice"></span>
               </div>
-            )}
-
-            {/* TAB 2: UNREAL AI PLANNER */}
-            {activeTab === 'planner' && (
-              <div className="space-y-4">
-                
-                {/* Simulated Gemini Engine UI */}
-                <div className={`bg-gradient-to-br from-slate-900 to-emerald-950 border rounded-2xl p-5 space-y-4 shadow-2xl relative overflow-hidden transition-all duration-500 ${isAIPlanning ? 'border-emerald-400 ai-glow' : 'border-emerald-800'}`}>
-                  <div className="absolute top-0 right-0 p-3 opacity-20 text-6xl">✨</div>
-                  <div className="flex justify-between items-center relative z-10">
-                    <div>
-                      <h2 className="font-bold text-emerald-400 text-lg flex items-center gap-2">
-                        <span>🧠</span> Gemini AI Season Engine
-                      </h2>
-                      <p className="text-[11px] text-emerald-200/70">75 Oriole Pkwy / Weather / Badge Integrator</p>
+              
+              <div class="space-y-2">
+                <h5 class="font-bold text-amber-500/80 text-[10px] uppercase tracking-widest">Station Leads</h5>
+                <template x-for="st in m.stations" :key="st.id">
+                  <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 flex justify-between items-center shadow-inner">
+                    <span class="font-bold text-slate-200 text-xs" x-text="st.name"></span>
+                    <div class="flex items-center gap-2">
+                      <span :class="st.assignedTo === 'Unassigned' ? 'text-amber-400' : 'text-emerald-400'" class="font-mono text-[10px] font-bold uppercase" x-text="st.assignedTo"></span>
+                      <template x-if="st.assignedTo === 'Unassigned'">
+                        <button @click="assignStation(m.id, st.id)" class="bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded text-[10px] text-white font-bold tracking-wider shadow">CLAIM</button>
+                      </template>
                     </div>
                   </div>
+                </template>
+              </div>
+            </div>
 
-                  {isAIPlanning ? (
-                    <div className="space-y-3 relative z-10 py-4">
-                      <div className="flex justify-between text-xs text-emerald-300 font-mono">
-                        <span>{Math.floor((aiStep / aiStatusMessages.length) * 100)}% Complete</span>
-                        <span className="animate-pulse">Processing...</span>
-                      </div>
-                      <div className="w-full bg-slate-900 rounded-full h-2">
-                        <div className="bg-emerald-400 h-2 rounded-full transition-all duration-300" style={{ width: `${(aiStep / aiStatusMessages.length) * 100}%` }}></div>
-                      </div>
-                      <p className="text-[11px] text-emerald-100 font-mono text-center h-8 flex items-center justify-center">
-                        {aiStatusMessages[aiStep]}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3 relative z-10">
-                      <div className="space-y-2 text-xs">
-                        <label className="text-slate-300 block">Override Target Property Zone:</label>
-                        <select value={propertyZone} onChange={(e) => setPropertyZone(e.target.value)} className="w-full bg-slate-900/50 border border-emerald-700/50 rounded p-2 text-slate-100 font-bold focus:outline-none focus:border-emerald-400">
-                          <option value="Outdoor Back Field">Outdoor Back Field (Auto-Select Sept/Oct)</option>
-                          <option value="Main Gym / Hall">Main Gym / Hall (Auto-Select Nov/Dec)</option>
-                        </select>
-                      </div>
-                      <button 
-                        onClick={triggerAISeasonPlan}
-                        className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black tracking-wide py-3.5 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]"
-                      >
-                        <span>✨</span> GENERATE AI SEASON PLAN
-                      </button>
-                    </div>
-                  )}
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- TAB 3: CAMPS PLANNER -->
+    <div x-show="tab === 'camps'" x-transition.opacity.duration.300ms class="space-y-4">
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-5 space-y-2 shadow-md">
+        <h2 class="font-bold text-amber-400 text-sm flex items-center gap-2 uppercase tracking-wide"><span>🏕️</span> Scouts Canada Grid</h2>
+        <p class="text-[11px] text-slate-300 leading-relaxed">High-coverage weekends are highlighted, strictly maintaining <strong class="text-emerald-400 bg-emerald-950 px-1 rounded">3 weeks minimum spacing</strong> between deployments.</p>
+      </div>
+      
+      <div class="space-y-2">
+        <template x-for="wknd in camps" :key="wknd.id">
+          <div :class="wknd.isBestPick ? 'bg-slate-800 border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.1)]' : 'bg-slate-900 border-slate-800'" class="border rounded-xl overflow-hidden transition-all duration-300">
+            <div @click="selectedCamp = selectedCamp === wknd.id ? null : wknd.id" class="p-4 cursor-pointer flex justify-between relative">
+              <div class="space-y-1.5 z-10">
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-slate-100 text-[13px] tracking-wide" x-text="wknd.date"></span>
+                  <template x-if="wknd.isBestPick">
+                    <span class="bg-amber-500 text-slate-950 font-black text-[9px] px-2 py-0.5 rounded shadow-sm uppercase tracking-wider">⭐ Optimal Pick</span>
+                  </template>
                 </div>
+                <p class="text-[11px] text-emerald-400 font-mono tracking-tight">📍 <span x-text="wknd.rec"></span></p>
+              </div>
+              <div class="text-right z-10 flex flex-col justify-center">
+                <span :class="wknd.score.includes('5/5') || wknd.score.includes('4/5') ? 'bg-emerald-950 text-emerald-400 border-emerald-800' : 'bg-slate-800 text-slate-400 border-slate-700'" class="text-[10px] font-mono font-bold px-2 py-1 rounded border shadow-inner" x-text="wknd.score"></span>
+              </div>
+            </div>
+            
+            <div x-show="selectedCamp === wknd.id" x-transition class="bg-slate-950 p-4 border-t border-slate-800 space-y-3 text-xs">
+              <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 text-slate-300 space-y-2 text-[11px] shadow-inner">
+                <p><strong class="text-slate-400 uppercase tracking-wider">Facility:</strong> <span x-text="wknd.accom"></span></p>
+                <p><strong class="text-slate-400 uppercase tracking-wider">Transit:</strong> <span x-text="wknd.drive"></span></p>
+                <p><strong class="text-slate-400 uppercase tracking-wider">Atmosphere:</strong> <span x-text="wknd.weather"></span></p>
+              </div>
+              <div class="bg-emerald-950/40 p-3 rounded-lg border border-emerald-800/50 text-emerald-200 text-[11px] leading-relaxed">
+                <strong class="uppercase tracking-wider text-emerald-400 block mb-1">Target Activities:</strong> <span x-text="wknd.acts"></span>
+              </div>
+              <div class="text-[10px] text-amber-500/90 font-mono italic px-1" x-text="'ℹ️ ' + wknd.gap"></div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
 
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center"><h3 className="font-bold text-slate-300 text-sm">Automated Meeting Schedules</h3></div>
-                  {meetings.map((m) => (
-                    <div key={m.id} className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-sm">
-                      <div onClick={() => setSelectedMeetingId(selectedMeetingId === m.id ? null : m.id)} className="p-4 cursor-pointer flex justify-between hover:bg-slate-750 transition">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-mono text-amber-400 bg-amber-950 px-2 py-0.5 rounded border border-amber-800">{m.date}</span>
-                          </div>
-                          <h4 className="font-bold text-slate-100 text-base">{m.title}</h4>
-                          <p className="text-[11px] text-slate-400">📍 {m.location}</p>
-                        </div>
-                      
+    <!-- TAB 4: LIVE MEETING (AKELA RESTRICTED) -->
+    <div x-show="tab === 'live'" x-transition.opacity.duration.300ms class="space-y-4">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-col justify-center items-center shadow-inner">
+          <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Mission Clock</span>
+          <div class="text-4xl font-mono font-bold text-amber-400 tracking-tight">84:20</div>
+        </div>
+        <button @click="helpOpen = true" class="bg-slate-800 hover:bg-slate-750 border-2 border-rose-500 rounded-xl p-4 flex flex-col justify-center items-center transition-all shadow-[0_0_15px_rgba(244,63,94,0.15)] group">
+          <span class="text-3xl mb-1 group-hover:scale-110 transition-transform">🚨</span>
+          <span class="text-[10px] text-rose-400 font-bold uppercase tracking-widest text-center leading-tight">Call Scouter<br/>Support</span>
+        </button>
+      </div>
+
+      <div class="space-y-3 pt-2">
+        <h3 class="font-bold text-slate-300 text-xs uppercase tracking-widest flex items-center justify-between px-1">
+          <span>Sequence Tracker</span>
+          <span class="text-[10px] text-slate-500 font-mono bg-slate-800 px-2 py-1 rounded" x-text="'Phase ' + (activityIdx + 1) + ' of ' + schedule.length"></span>
+        </h3>
+        
+        <div class="bg-emerald-950/40 border-2 border-emerald-500 rounded-xl p-5 space-y-2 shadow-lg relative overflow-hidden">
+          <div class="absolute top-0 left-0 w-1.5 bg-emerald-400 h-full shadow-[0_0_10px_#34d399]"></div>
+          <div class="flex justify-between text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-2">
+            <span class="animate-pulse">▶ Live Execution</span>
+            <span class="bg-emerald-900 border border-emerald-700 px-2 py-0.5 rounded shadow-inner" x-text="schedule[activityIdx].dur"></span>
+          </div>
+          <h4 class="font-black text-slate-50 text-xl tracking-wide" x-text="schedule[activityIdx].name"></h4>
+          <p class="text-xs text-emerald-100/70 leading-relaxed font-mono" x-text="schedule[activityIdx].desc"></p>
+        </div>
+
+        <template x-if="activityIdx < schedule.length - 1">
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-1 opacity-60">
+            <div class="flex justify-between text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+              <span>Next Phase</span>
+              <span x-text="schedule[activityIdx + 1].dur"></span>
+            </div>
+            <h4 class="font-bold text-slate-400 text-sm" x-text="schedule[activityIdx + 1].name"></h4>
+          </div>
+        </template>
+      </div>
+
+      <template x-if="user === 'Akela'">
+        <button @click="advanceActivity()" :disabled="activityIdx >= schedule.length - 1" :class="activityIdx >= schedule.length - 1 ? 'bg-slate-900 border-slate-800 text-slate-600 cursor-not-allowed' : 'bg-amber-500 hover:bg-amber-400 border-amber-300 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.3)]'" class="w-full py-4 rounded-xl border-2 flex items-center justify-center gap-2 mt-6 text-xs tracking-widest uppercase font-black transition-all transform hover:scale-[1.02]">
+          <span x-text="activityIdx >= schedule.length - 1 ? '🏁 SEQUENCE COMPLETE' : '⏭️ OVERRIDE & ADVANCE (Akela)'"></span>
+        </button>
+      </template>
+    </div>
+
+    <!-- TAB 5: BUY -->
+    <div x-show="tab === 'buy'" x-transition.opacity.duration.300ms class="space-y-4">
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-5 space-y-4 shadow-md">
+        <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+          <h2 class="font-bold text-amber-400 flex items-center gap-2 text-sm uppercase tracking-wide"><span>🛒</span> Procurement API</h2>
+          <span class="text-[9px] font-black bg-amber-500 text-slate-950 px-2 py-0.5 rounded uppercase tracking-widest shadow">Approval Req</span>
+        </div>
+        <div class="space-y-3 text-xs">
+          <p class="text-slate-400 text-[11px] uppercase tracking-wide
