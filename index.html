@@ -22,7 +22,7 @@
     const { useState, useEffect } = React;
 
     function ScoutCommandApp() {
-      const [activeTab, setActiveTab] = useState('planner');
+      const [activeTab, setActiveTab] = useState('polls');
       
       // Feature Flags State
       const [flags, setFlags] = useState({
@@ -38,6 +38,23 @@
         outings: 420.00,
         badges: 110.00
       });
+
+      // Scouter Availability & Polling State
+      const [tuesdayDates] = useState(['Oct 13', 'Oct 20', 'Oct 27', 'Nov 03']);
+      const [weekendDates] = useState(['Oct 24–25 (Fall Camp)', 'Nov 14–15 (Caving)', 'Dec 05–06 (Winter Camp)']);
+
+      const [myPoll, setMyPoll] = useState({
+        maxWeekendsPerMonth: 1,
+        availableTuesdays: ['Oct 13', 'Oct 27'],
+        availableWeekends: ['Oct 24–25 (Fall Camp)']
+      });
+
+      const [rosterSummary] = useState([
+        { name: 'Akela (You)', tuesdays: ['Oct 13', 'Oct 27'], weekendsCount: 1, availableWeekends: ['Oct 24–25'] },
+        { name: 'Baloo', tuesdays: ['Oct 13', 'Oct 20', 'Oct 27', 'Nov 03'], weekendsCount: 2, availableWeekends: ['Oct 24–25', 'Nov 14–15'] },
+        { name: 'Bagheera', tuesdays: ['Oct 20', 'Nov 03'], weekendsCount: 1, availableWeekends: ['Nov 14–15'] },
+        { name: 'Kaa', tuesdays: ['Oct 13', 'Oct 20', 'Oct 27'], weekendsCount: 1, availableWeekends: ['Dec 05–06'] }
+      ]);
 
       // Procurement Items State
       const [orderApproved, setOrderApproved] = useState(false);
@@ -60,7 +77,7 @@
       const [meetings, setMeetings] = useState([
         {
           id: 1,
-          date: 'Oct 12, 2026',
+          date: 'Oct 13, 2026',
           title: 'Paracord & Compass Navigation',
           theme: 'OAS Trail Skills Stage 2 & 3',
           cost: 15.49,
@@ -72,26 +89,12 @@
             { time: '15 min', name: 'Active Game: Compass Points Dodgeball' },
             { time: '10 min', name: 'Closing & Announcements' }
           ]
-        },
-        {
-          id: 2,
-          date: 'Oct 19, 2026',
-          title: 'Campfire Safety & Outdoor Cooking',
-          theme: 'OAS Bushcraft Stage 1',
-          cost: 12.00,
-          stations: [
-            { time: '10 min', name: 'Gathering: Fire Wood Sorting Game' },
-            { time: '05 min', name: 'Opening Ceremony' },
-            { time: '30 min', name: 'Station A: Edible Campfire Building (Pretzels & Candy)' },
-            { time: '30 min', name: 'Station B: Spark Lighting & Safety Rules' },
-            { time: '15 min', name: 'Closing & Campfire Song' }
-          ]
         }
       ]);
 
       // Meeting Generator Form
       const [genTopic, setGenTopic] = useState('First Aid & Wilderness Safety');
-      const [genDate, setGenDate] = useState('Oct 26, 2026');
+      const [genDate, setGenDate] = useState('Oct 20, 2026');
 
       // Timer Logic
       useEffect(() => {
@@ -108,6 +111,30 @@
         const m = Math.floor(totalSeconds / 60);
         const s = totalSeconds % 60;
         return `${m}:${s < 10 ? '0' : ''}${s}`;
+      };
+
+      const toggleTuesday = (date) => {
+        setMyPoll(prev => {
+          const exists = prev.availableTuesdays.includes(date);
+          return {
+            ...prev,
+            availableTuesdays: exists 
+              ? prev.availableTuesdays.filter(d => d !== date)
+              : [...prev.availableTuesdays, date]
+          };
+        });
+      };
+
+      const toggleWeekend = (date) => {
+        setMyPoll(prev => {
+          const exists = prev.availableWeekends.includes(date);
+          return {
+            ...prev,
+            availableWeekends: exists 
+              ? prev.availableWeekends.filter(d => d !== date)
+              : [...prev.availableWeekends, date]
+          };
+        });
       };
 
       const handleGenerateMeeting = () => {
@@ -135,6 +162,11 @@
         }
       };
 
+      // Calculate Scouter count for a Tuesday
+      const getTuesdayCount = (date) => {
+        return rosterSummary.filter(s => s.tuesdays.includes(date)).length;
+      };
+
       return (
         <div class="max-w-md mx-auto min-h-screen bg-slate-900 shadow-2xl relative flex flex-col">
           
@@ -155,7 +187,118 @@
           {/* Main Content Area */}
           <main class="flex-1 p-4 space-y-4 overflow-y-auto no-scrollbar">
 
-            {/* TAB 1: PLANNER */}
+            {/* TAB: SCOUTER POLLS & AVAILABILITY */}
+            {activeTab === 'polls' && (
+              <div class="space-y-4">
+                
+                {/* Personal Availability Form */}
+                <div class="bg-slate-800 border border-emerald-800/80 rounded-xl p-4 space-y-4">
+                  <div class="border-b border-slate-700 pb-2">
+                    <h2 class="font-bold text-emerald-400 flex items-center gap-2">
+                      <span>🙋‍♂️</span> Your Availability Poll (Akela)
+                    </h2>
+                    <p class="text-xs text-slate-400">Set your meeting night and camping limits</p>
+                  </div>
+
+                  {/* Tuesday Night Poll */}
+                  <div class="space-y-2">
+                    <label class="text-xs font-bold text-amber-400 block">1. Available Tuesday Nights</label>
+                    <div class="grid grid-cols-2 gap-2">
+                      {tuesdayDates.map((date) => {
+                        const isSelected = myPoll.availableTuesdays.includes(date);
+                        return (
+                          <button
+                            key={date}
+                            onClick={() => toggleTuesday(date)}
+                            class={`p-2.5 rounded-lg border text-xs font-bold flex items-center justify-between transition ${isSelected ? 'bg-emerald-950 border-emerald-500 text-emerald-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}
+                          >
+                            <span>{date}</span>
+                            <span>{isSelected ? '✓' : '+'}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Weekend Cap Selector */}
+                  <div class="space-y-2">
+                    <label class="text-xs font-bold text-amber-400 block">2. Maximum Weekend Camps Limit</label>
+                    <div class="flex items-center justify-between bg-slate-900 p-3 rounded-lg border border-slate-700">
+                      <span class="text-xs text-slate-300">Max Camps / Month:</span>
+                      <div class="flex items-center space-x-3">
+                        <button 
+                          onClick={() => setMyPoll(p => ({ ...p, maxWeekendsPerMonth: Math.max(0, p.maxWeekendsPerMonth - 1) }))}
+                          class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 font-bold"
+                        >
+                          -
+                        </button>
+                        <span class="font-mono text-emerald-400 font-bold">{myPoll.maxWeekendsPerMonth}</span>
+                        <button 
+                          onClick={() => setMyPoll(p => ({ ...p, maxWeekendsPerMonth: p.maxWeekendsPerMonth + 1 }))}
+                          class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 font-bold"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Weekend Camp Dates Poll */}
+                  <div class="space-y-2">
+                    <label class="text-xs font-bold text-amber-400 block">3. Weekend Camp Dates Available</label>
+                    <div class="space-y-1.5">
+                      {weekendDates.map((wknd) => {
+                        const isSelected = myPoll.availableWeekends.includes(wknd);
+                        return (
+                          <button
+                            key={wknd}
+                            onClick={() => toggleWeekend(wknd)}
+                            class={`w-full p-2.5 rounded-lg border text-xs font-bold flex items-center justify-between transition ${isSelected ? 'bg-emerald-950 border-emerald-500 text-emerald-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}
+                          >
+                            <span>{wknd}</span>
+                            <span>{isSelected ? '✓ Available' : 'Unavailable'}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section Leader Coverage Matrix */}
+                <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
+                  <h3 class="font-bold text-slate-200 text-xs flex items-center gap-2">
+                    <span>📊</span> Pack Tuesday Coverage Matrix
+                  </h3>
+                  
+                  <div class="space-y-2">
+                    {tuesdayDates.map((date) => {
+                      const count = getTuesdayCount(date);
+                      const isLow = count < 2;
+                      return (
+                        <div key={date} class="bg-slate-900 p-2.5 rounded-lg border border-slate-800 flex items-center justify-between text-xs">
+                          <div>
+                            <span class="font-bold text-slate-200">{date}</span>
+                            <p class="text-[10px] text-slate-400">{count} Scouters Confirmed</p>
+                          </div>
+                          {isLow ? (
+                            <span class="bg-rose-950 text-rose-300 border border-rose-800 px-2 py-0.5 rounded text-[10px] font-bold">
+                              ⚠️ RATIO RISK (&lt;2)
+                            </span>
+                          ) : (
+                            <span class="bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded text-[10px]">
+                              ✓ Covered ({count})
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {/* TAB: PLANNER */}
             {activeTab === 'planner' && (
               <div class="space-y-4">
                 
@@ -259,7 +402,7 @@
               </div>
             )}
 
-            {/* TAB 2: LIVE MEETING */}
+            {/* TAB: LIVE MEETING */}
             {activeTab === 'live' && (
               <div class="space-y-4">
                 
@@ -340,7 +483,7 @@
               </div>
             )}
 
-            {/* TAB 3: PROCUREMENT */}
+            {/* TAB: PROCUREMENT */}
             {activeTab === 'procurement' && (
               <div class="space-y-4">
                 <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
@@ -354,7 +497,7 @@
                   </div>
 
                   <div class="space-y-2 text-xs">
-                    <p class="text-slate-300">Required for <strong class="text-slate-100">Oct 12 Meeting (Paracord Bracelets)</strong>:</p>
+                    <p class="text-slate-300">Required for <strong class="text-slate-100">Oct 13 Meeting (Paracord Bracelets)</strong>:</p>
                     <ul class="space-y-1 bg-slate-900 p-2.5 rounded border border-slate-800 font-mono text-slate-300">
                       <li class="flex justify-between">
                         <span>• 100ft Olive 550 Paracord</span>
@@ -387,7 +530,7 @@
               </div>
             )}
 
-            {/* TAB 4: YOUTH VOTE */}
+            {/* TAB: YOUTH VOTE */}
             {activeTab === 'youth' && (
               <div class="space-y-4">
                 <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
@@ -437,7 +580,7 @@
               </div>
             )}
 
-            {/* TAB 5: SETTINGS & FEATURE FLAGS */}
+            {/* TAB: SETTINGS & FEATURE FLAGS */}
             {activeTab === 'settings' && (
               <div class="space-y-4">
                 <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
@@ -525,8 +668,16 @@
           {/* Bottom Navigation Bar */}
           <nav class="bg-slate-950 border-t border-slate-800 fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40 flex justify-around p-2">
             <button 
+              onClick={() => setActiveTab('polls')}
+              class={`flex flex-col items-center py-1 px-2 rounded-lg ${activeTab === 'polls' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}
+            >
+              <span class="text-lg">🙋‍♂️</span>
+              <span class="text-[10px]">Polls</span>
+            </button>
+
+            <button 
               onClick={() => setActiveTab('planner')}
-              class={`flex flex-col items-center py-1 px-3 rounded-lg ${activeTab === 'planner' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}
+              class={`flex flex-col items-center py-1 px-2 rounded-lg ${activeTab === 'planner' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}
             >
               <span class="text-lg">📅</span>
               <span class="text-[10px]">Planner</span>
@@ -534,7 +685,7 @@
 
             <button 
               onClick={() => setActiveTab('live')}
-              class={`flex flex-col items-center py-1 px-3 rounded-lg ${activeTab === 'live' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}
+              class={`flex flex-col items-center py-1 px-2 rounded-lg ${activeTab === 'live' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}
             >
               <span class="text-lg">⏱️</span>
               <span class="text-[10px]">Live</span>
@@ -543,7 +694,7 @@
             {flags.autoProcurement && (
               <button 
                 onClick={() => setActiveTab('procurement')}
-                class={`flex flex-col items-center py-1 px-3 rounded-lg ${activeTab === 'procurement' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}
+                class={`flex flex-col items-center py-1 px-2 rounded-lg ${activeTab === 'procurement' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}
               >
                 <span class="text-lg">🛒</span>
                 <span class="text-[10px]">Buy</span>
@@ -553,7 +704,7 @@
             {flags.youthVote && (
               <button 
                 onClick={() => setActiveTab('youth')}
-                class={`flex flex-col items-center py-1 px-3 rounded-lg ${activeTab === 'youth' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}
+                class={`flex flex-col items-center py-1 px-2 rounded-lg ${activeTab === 'youth' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}
               >
                 <span class="text-lg">🗳️</span>
                 <span class="text-[10px]">Vote</span>
@@ -562,7 +713,7 @@
 
             <button 
               onClick={() => setActiveTab('settings')}
-              class={`flex flex-col items-center py-1 px-3 rounded-lg ${activeTab === 'settings' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}
+              class={`flex flex-col items-center py-1 px-2 rounded-lg ${activeTab === 'settings' ? 'text-amber-400 font-bold' : 'text-slate-400'}`}
             >
               <span class="text-lg">⚙️</span>
               <span class="text-[10px]">Flags</span>
