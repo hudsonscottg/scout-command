@@ -19,17 +19,13 @@ body { -webkit-tap-highlight-color: transparent; }
 }
 .animate-fly { animation: flyToTent 0.4s ease-in-out forwards; }
 
-@keyframes sirenFlash {
-0%, 100% { background-color: #f59e0b; }
-50% { background-color: #d97706; transform: scale(1.02); }
-}
-.animate-siren { animation: sirenFlash 0.8s infinite; }
-
 @keyframes pulseGlow {
 0%, 100% { box-shadow: 0 0 15px #34d399, inset 0 0 10px #34d399; }
 50% { box-shadow: 0 0 35px #10b981, inset 0 0 25px #10b981; }
 }
 .ai-glow { animation: pulseGlow 1.5s infinite; }
+
+.mic-listening { animation: pulseGlow 1s infinite alternate; background-color: #ef4444 !important; border-color: #f87171 !important; color: white !important;}
 </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans pb-28 relative">
@@ -48,6 +44,11 @@ Role: Akela
 </span>
 </header>
 
+<!-- Ratio Banner (Sticky) -->
+<div id="ratioBanner" class="bg-rose-950 text-rose-300 border-b border-rose-800 p-2 text-center text-[10px] font-bold uppercase tracking-widest sticky top-[68px] z-20 shadow-md transition-colors duration-300">
+Ratio: ❌ Minimum 2 Scouters Required
+</div>
+
 <main class="p-4 space-y-4">
 
 <!-- TAB 1: ATTENDANCE -->
@@ -56,44 +57,44 @@ Role: Akela
 <!-- Present Status Board -->
 <div class="bg-emerald-950 border-2 border-emerald-600 rounded-2xl p-4 text-center relative overflow-hidden shadow-xl">
 <div class="flex justify-between items-center mb-1">
-<span class="text-xs font-mono text-emerald-400 font-bold uppercase tracking-widest">Basecamp Check-In</span>
-<button id="undoBtn" class="text-[10px] px-2 py-1 rounded-lg border font-bold flex items-center gap-1 bg-amber-500 text-slate-950 border-amber-400 shadow transform active:scale-95 transition-transform">
+<span class="text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-widest">Basecamp</span>
+<div class="flex gap-2">
+<button id="voiceCheckInBtn" class="text-[11px] px-2.5 py-1 rounded-lg border font-bold flex items-center gap-1 bg-slate-800 text-emerald-400 border-emerald-500 shadow transform active:scale-95 transition-all">
+🎤 Voice
+</button>
+<button id="undoBtn" class="text-[11px] px-2.5 py-1 rounded-lg border font-bold flex items-center gap-1 bg-amber-500 text-slate-950 border-amber-400 shadow transform active:scale-95 transition-transform">
 ↩️ Undo
 </button>
 </div>
+</div>
 <div class="text-4xl my-2 drop-shadow-lg">🏕️</div>
-<h3 class="font-bold text-amber-400 text-sm uppercase tracking-widest mb-3">
-Present (<span id="presentCount">0</span> / <span id="totalCount">34</span>)
+<h3 class="font-bold text-amber-400 text-sm uppercase tracking-widest mb-1">
+Present: <span id="presentCount">0</span>/<span id="totalCount">34</span> Cubs | <span id="presentScouterCount">0</span> Scouters
 </h3>
-<div id="presentList" class="flex flex-wrap justify-center gap-1.5 max-h-32 overflow-y-auto no-scrollbar">
-<span class="text-xs text-emerald-500/70 italic font-mono">Awaiting arrivals...</span>
+<div id="presentList" class="flex flex-wrap justify-center gap-1.5 max-h-32 overflow-y-auto no-scrollbar mt-3">
+<span class="text-[11px] text-emerald-500/70 italic font-mono">Awaiting arrivals...</span>
+</div>
+</div>
+
+<!-- Scouter Check-In -->
+<div class="space-y-2">
+<div class="flex justify-between items-center bg-slate-900 p-2 rounded-lg border border-slate-800">
+<h4 class="text-[11px] font-bold text-amber-400 uppercase tracking-wider">Leadership Check-In</h4>
+</div>
+<div id="scouterList" class="grid grid-cols-2 gap-2">
+<!-- Dynamically populated -->
 </div>
 </div>
 
 <!-- Absent Roster List -->
 <div class="space-y-2">
-<div class="flex justify-between items-center bg-slate-900 p-2 rounded-lg border border-slate-800">
-<h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tap to Arrive</h4>
+<div class="flex justify-between items-center bg-slate-900 p-2 rounded-lg border border-slate-800 mt-2">
+<h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tap Cub to Arrive</h4>
 <span class="text-[10px] text-slate-500 font-mono"><span id="remainingCount">34</span> Remaining</span>
 </div>
 
 <div id="absentList" class="space-y-3 max-h-96 overflow-y-auto no-scrollbar pb-4 pr-1">
 <!-- Dynamically populated grouped list -->
-</div>
-</div>
-
-<!-- Add Cub Form -->
-<div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 shadow-inner">
-<h5 class="text-[10px] font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2"><span>➕</span> Add New Cub to Roster</h5>
-<div class="flex gap-2">
-<input type="text" id="newCubInput" placeholder="First Name..." class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-400">
-<select id="newCubLair" class="bg-slate-950 border border-slate-700 rounded-lg px-2 text-[10px] text-slate-300">
-<option value="1">Lair 1</option>
-<option value="2">Lair 2</option>
-<option value="3">Lair 3</option>
-<option value="4">Lair 4</option>
-</select>
-<button id="addCubActionBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-2 rounded-lg text-xs shadow active:scale-95 transition">Add</button>
 </div>
 </div>
 </div>
@@ -114,67 +115,111 @@ Present (<span id="presentCount">0</span> / <span id="totalCount">34</span>)
 
 <div id="aiTerminal" class="hidden space-y-3 relative z-10 py-2">
 <div class="flex justify-between text-[10px] text-emerald-300 font-mono uppercase tracking-widest">
-<span id="aiProgressText">Analyzing Weather...</span>
+<span id="aiProgressText">Mapping previous seasonal vectors...</span>
 <span class="animate-pulse text-amber-400">SYNTHESIZING</span>
 </div>
 <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden shadow-inner border border-slate-800">
 <div id="aiBar" class="bg-emerald-400 h-1.5 rounded-full transition-all duration-300 shadow-[0_0_10px_#34d399]" style="width: 0%"></div>
 </div>
 <div class="bg-slate-950/80 rounded-lg p-3 border border-emerald-900/50 shadow-inner">
-<p id="aiLog" class="text-[10px] text-emerald-400 font-mono text-center tracking-wide">Initializing Gemini vector engine...</p>
+<p id="aiLog" class="text-[10px] text-emerald-400 font-mono text-center tracking-wide">Integrating PQA Feedback & Kub Kar engineering goals...</p>
 </div>
 </div>
 
 <div id="aiControls" class="space-y-3 relative z-10">
 <div class="bg-slate-950/60 p-3 rounded-xl border border-emerald-900/60 text-[11px] space-y-1 font-mono text-slate-300">
-<span class="text-emerald-400 font-bold block mb-1">💡 Real-Time Context:</span>
-Evaluating Lair dynamics (34 youth) against 75 Oriole Pkwy seasonal forecasts.
+<span class="text-emerald-400 font-bold block mb-1">💡 Data Context Loaded:</span>
+PQA feedback, Gamified Learning directives, 34-Cub Lair system, and Woolwich weather models ready.
 </div>
 <button id="runAiBtn" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black tracking-widest text-[11px] py-4 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2 transition-transform transform active:scale-95 uppercase border border-emerald-300">
-<span>✨</span> Generate Lair Sequences
+<span>✨</span> Generate Seasonal Plan
 </button>
 </div>
 </div>
 
-<div class="space-y-3" id="aiResults" class="hidden">
-<h3 class="font-bold text-slate-300 text-[10px] uppercase tracking-widest px-1">Suggested Formats</h3>
+<div class="space-y-3 hidden" id="aiResults">
+<h3 class="font-bold text-slate-300 text-[10px] uppercase tracking-widest px-1">Generated Mission Vectors</h3>
+
+<div class="space-y-2">
+<div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-md">
+<span class="text-[9px] font-mono text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800 uppercase">Vector 1</span>
+<h4 class="font-bold text-slate-100 text-sm mt-1">Gamified Compass Navigation</h4>
+<p class="text-[11px] text-slate-400 leading-relaxed mb-1">Rotational multi-lair challenge utilizing compass skills.</p>
+<div class="text-[10px] text-amber-400 font-mono">📍 75 Oriole Pkwy (Outdoor Back Field)</div>
+</div>
 
 <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-md">
-<div class="flex justify-between items-center mb-1">
-<span class="text-[9px] font-mono text-amber-400 bg-amber-950/50 px-2 py-0.5 rounded border border-amber-800 uppercase">Oct - Dec 2026</span>
-<span class="bg-emerald-950 text-emerald-300 border border-emerald-800 text-[9px] px-2 py-0.5 rounded font-bold uppercase">Confidence: 97%</span>
+<span class="text-[9px] font-mono text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800 uppercase">Vector 2</span>
+<h4 class="font-bold text-slate-100 text-sm mt-1">Water Sustainability & Shelter Building</h4>
+<p class="text-[11px] text-slate-400 leading-relaxed mb-1">Hands-on environmental conservation and survival skills.</p>
+<div class="text-[10px] text-amber-400 font-mono">📍 75 Oriole Pkwy (Outdoor / Forest edge)</div>
 </div>
-<h4 class="font-bold text-slate-100 text-sm mb-1">4-Station Multi-Lair Rotation</h4>
-<p class="text-[11px] text-slate-400 leading-relaxed mb-2">Utilize the Outdoor Back Field. Rotate the 4 lairs through distinct hands-on skills to maintain engagement and prevent Scouter burnout.</p>
-<div class="bg-slate-900 p-2 rounded border border-slate-800 text-[10px] text-emerald-400 font-mono">📍 75 Oriole Pkwy (Ideal: Dry/Clear)</div>
+
+<div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-md">
+<span class="text-[9px] font-mono text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800 uppercase">Vector 3</span>
+<h4 class="font-bold text-slate-100 text-sm mt-1">Kub Kar Engineering & Prep</h4>
+<p class="text-[11px] text-slate-400 leading-relaxed mb-1">Tools safety, weight dynamics, and regional competition prep.</p>
+<div class="text-[10px] text-amber-400 font-mono">📍 75 Oriole Pkwy (Indoor Hall)</div>
+</div>
+
+<div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-md">
+<span class="text-[9px] font-mono text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800 uppercase">Vector 4</span>
+<h4 class="font-bold text-slate-100 text-sm mt-1">PQA Review & Year-End Potluck</h4>
+<p class="text-[11px] text-slate-400 leading-relaxed mb-1">Youth-led Program Quality Assessment and family celebration.</p>
+<div class="text-[10px] text-amber-400 font-mono">📍 Bolender Park, Elmira</div>
+</div>
 </div>
 </div>
 </div>
 
 <!-- TAB 3: CAMPS -->
-
 <div id="tab-camps" class="tab-content space-y-4">
-<div class="bg-slate-800 border border-slate-700 rounded-xl p-5 space-y-2 shadow-md">
-<h2 class="font-bold text-amber-400 text-sm flex items-center gap-2 uppercase tracking-wide"><span>🏕️</span> Scouts Canada Grid</h2>
-<p class="text-[11px] text-slate-300 leading-relaxed">High-coverage weekends with <strong class="text-emerald-400 bg-emerald-950 px-1 rounded">3 weeks minimum spacing</strong>:</p>
+
+<!-- Scouter Availability Matrix -->
+<div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3 shadow-md">
+<h2 class="font-bold text-amber-400 text-xs flex items-center gap-2 uppercase tracking-wide"><span>📅</span> Scouter Availability Matrix</h2>
+<div class="overflow-x-auto no-scrollbar">
+<table class="w-full text-[10px] text-left border-collapse">
+<thead>
+<tr class="text-slate-400 border-b border-slate-700">
+<th class="p-1">Scouter</th>
+<th class="p-1 text-center">Oct 24-25</th>
+<th class="p-1 text-center">Nov 7-8</th>
+<th class="p-1 text-center">Nov 21-22</th>
+</tr>
+</thead>
+<tbody id="availabilityMatrix">
+<!-- Rendered via JS -->
+</tbody>
+</table>
+</div>
 </div>
 
-<div class="space-y-3">
-<div class="bg-slate-900 border-l-4 border-l-amber-500 border-t border-r border-b border-slate-800 rounded-r-xl p-4 space-y-2 shadow-inner">
+<!-- Camp Search Engine -->
+<div class="bg-slate-900 border border-slate-700 rounded-xl p-4 space-y-3 shadow-md">
+<h2 class="font-bold text-emerald-400 text-xs flex items-center gap-2 uppercase tracking-wide"><span>🏕️</span> Scouts Canada Property Search</h2>
+<button id="searchCampsBtn" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold text-[11px] py-3 rounded-lg uppercase tracking-widest active:scale-95 transition-transform">
+Search Real-Time Availability
+</button>
+
+<div id="campResults" class="space-y-3 hidden pt-2">
+<div class="bg-slate-950 border-l-4 border-l-amber-500 border-t border-r border-b border-slate-800 rounded-r-xl p-4 space-y-2 shadow-inner">
 <div class="flex justify-between items-center">
-<span class="font-bold text-slate-100 text-sm">Oct 24–25, 2026</span>
-<span class="bg-amber-500 text-slate-950 font-black text-[9px] px-2 py-0.5 rounded uppercase tracking-wider">⭐ Optimal</span>
+<span class="font-bold text-slate-100 text-[11px]">Oct 24–25, 2026</span>
+<span class="bg-amber-500 text-slate-950 font-black text-[9px] px-2 py-0.5 rounded uppercase tracking-wider">9/10 Scouters</span>
 </div>
-<p class="text-[11px] text-emerald-400 font-mono">📍 Blue Springs Scout Reserve (5/5 Scouters)</p>
-<p class="text-[10px] text-slate-400">Facility: Unheated Cabin & Tenting Field (45 mins from Elmira). Ideal for 34-cub deployment.</p>
+<p class="text-[11px] text-emerald-400 font-mono">📍 Blue Springs Scout Reserve</p>
+<p class="text-[10px] text-slate-400">Availability: Ebor Park Cabins. Ideal for 34-cub deployment (45 mins away).</p>
 </div>
 
-<div class="bg-slate-900 border-l-4 border-l-emerald-500 border-t border-r border-b border-slate-800 rounded-r-xl p-4 space-y-2 shadow-inner">
+<div class="bg-slate-950 border-l-4 border-l-emerald-500 border-t border-r border-b border-slate-800 rounded-r-xl p-4 space-y-2 shadow-inner">
 <div class="flex justify-between items-center">
-<span class="font-bold text-slate-100 text-sm">Nov 21–22, 2026</span>
+<span class="font-bold text-slate-100 text-[11px]">Nov 21–22, 2026</span>
+<span class="bg-slate-700 text-slate-300 font-black text-[9px] px-2 py-0.5 rounded uppercase tracking-wider">7/10 Scouters</span>
 </div>
-<p class="text-[11px] text-emerald-400 font-mono">📍 Laurel Creek Group Lodge (4/5 Scouters)</p>
-<p class="text-[10px] text-slate-400">Facility: Heated Group Lodge (15 mins from Elmira). Protects against late-fall weather vectors.</p>
+<p class="text-[11px] text-emerald-400 font-mono">📍 Camp Everton (Guelph)</p>
+<p class="text-[10px] text-slate-400">Availability: 2 Winterized Cabins. Protects against late-fall weather vectors.</p>
+</div>
 </div>
 </div>
 </div>
@@ -209,9 +254,7 @@ Evaluating Lair dynamics (34 youth) against 75 Oriole Pkwy seasonal forecasts.
 </div>
 </div>
 
-<div id="akelaButtonContainer">
-<!-- Rendered based on Role -->
-</div>
+<div id="akelaButtonContainer"></div>
 </div>
 
 <!-- TAB 5: BUY -->
@@ -230,114 +273,113 @@ Evaluating Lair dynamics (34 youth) against 75 Oriole Pkwy seasonal forecasts.
 </div>
 </div>
 
-<div id="buyActionContainer">
-<!-- Rendered based on Role -->
+<div id="buyActionContainer"></div>
 </div>
 </div>
-</div>
+  <!-- TAB 6: BADGES -->
+    <div id="tab-badges" class="tab-content space-y-4">
+      <div id="badgeAdminPanel" class="bg-slate-800 border border-slate-700 rounded-xl p-4 flex justify-between items-center shadow-md hidden">
+        <div>
+          <h4 class="font-bold text-[11px] text-slate-200 uppercase tracking-widest">Scouter Override</h4>
+          <p class="text-[9px] text-slate-400 font-mono">Mask modules from youth terminal</p>
+        </div>
+        <button id="adminToggleBtn" class="px-3 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all border bg-slate-900 border-slate-700 text-slate-300 shadow-inner active:scale-95">
+          YOUTH VIEW
+        </button>
+      </div>
+      <div class="grid grid-cols-2 gap-3" id="badgeGrid"></div>
+    </div>
 
-<!-- TAB 6: BADGES -->
-<div id="tab-badges" class="tab-content space-y-4">
-<div id="badgeAdminPanel" class="bg-slate-800 border border-slate-700 rounded-xl p-4 flex justify-between items-center shadow-md hidden">
-<div>
-<h4 class="font-bold text-[11px] text-slate-200 uppercase tracking-widest">Scouter Override</h4>
-<p class="text-[9px] text-slate-400 font-mono">Mask modules from youth terminal</p>
-</div>
-<button id="adminToggleBtn" class="px-3 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all border bg-slate-900 border-slate-700 text-slate-300 shadow-inner active:scale-95">
-YOUTH VIEW
-</button>
-</div>
+    <!-- TAB 7: CONFIG / SYSTEM -->
+    <div id="tab-settings" class="tab-content space-y-4">
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-5 space-y-4 shadow-md">
+        <h2 class="font-black text-amber-400 text-xs uppercase tracking-widest border-b border-slate-700 pb-3 flex items-center gap-2"><span>⚙️</span> Module Configuration</h2>
+        
+        <div class="space-y-3">
+          <div class="flex items-center justify-between bg-slate-900 p-3 rounded-lg border border-slate-800 shadow-inner">
+            <div>
+              <span class="font-bold text-slate-200 uppercase tracking-widest text-[10px] block">Active Profile</span>
+              <span class="text-[9px] text-slate-500 font-mono">Sets permissions</span>
+            </div>
+            <select id="roleSelect" class="bg-slate-950 border border-slate-700 rounded-md px-2 py-1.5 text-emerald-400 font-mono font-bold text-[10px] uppercase tracking-wider focus:outline-none focus:border-amber-400">
+              <option value="Akela">Akela (Command)</option>
+              <option value="Scouter">Scouter (Leader)</option>
+              <option value="Parent">Parent (Standard)</option>
+            </select>
+          </div>
 
-<div class="grid grid-cols-2 gap-3" id="badgeGrid">
-<!-- Rendered dynamically -->
-</div>
-</div>
+          <!-- Feature Flags -->
+          <div class="space-y-2 pt-2 border-t border-slate-700">
+            <h3 class="text-[9px] text-slate-400 uppercase tracking-widest font-bold">Feature Flags</h3>
+            
+            <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+              <span class="text-[11px] font-bold text-slate-300">AI Planner</span>
+              <button data-action="toggle-feature" data-feat="aiPlanner" class="feat-btn bg-emerald-600 text-white px-3 py-1 rounded text-[9px] font-bold uppercase active:scale-95">ON</button>
+            </div>
+            
+            <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+              <span class="text-[11px] font-bold text-slate-300">Voice Check-In</span>
+              <button data-action="toggle-feature" data-feat="voice" class="feat-btn bg-emerald-600 text-white px-3 py-1 rounded text-[9px] font-bold uppercase active:scale-95">ON</button>
+            </div>
+
+            <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+              <span class="text-[11px] font-bold text-slate-300">Procurement (Buy)</span>
+              <button data-action="toggle-feature" data-feat="procurement" class="feat-btn bg-emerald-600 text-white px-3 py-1 rounded text-[9px] font-bold uppercase active:scale-95">ON</button>
+            </div>
+            
+            <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+              <span class="text-[11px] font-bold text-slate-300">Badges</span>
+              <button data-action="toggle-feature" data-feat="badges" class="feat-btn bg-emerald-600 text-white px-3 py-1 rounded text-[9px] font-bold uppercase active:scale-95">ON</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
 </main>
+  <!-- BOTTOM NAVIGATION -->
+  <nav class="bg-slate-950/95 backdrop-blur border-t border-slate-800 fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40 flex overflow-x-auto no-scrollbar p-1.5 space-x-1 shadow-[0_-10px_15px_rgba(0,0,0,0.5)]">
+    <button data-tab="attendance" class="nav-btn flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-amber-400 font-bold bg-slate-900 shadow-inner transition-colors"><span class="text-base mb-0.5">⛺</span><span class="text-[9px] uppercase tracking-wider font-bold">Arrive</span></button>
+    <button data-tab="planner" id="nav-planner" class="nav-btn flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-slate-500 transition-colors"><span class="text-base mb-0.5">🧠</span><span class="text-[9px] uppercase tracking-wider font-bold">Plan</span></button>
+    <button data-tab="camps" id="nav-camps" class="nav-btn flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-slate-500 transition-colors"><span class="text-base mb-0.5">🏕️</span><span class="text-[9px] uppercase tracking-wider font-bold">Camps</span></button>
+    <button data-tab="live" id="nav-live" class="nav-btn flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-slate-500 transition-colors"><span class="text-base mb-0.5">⏱️</span><span class="text-[9px] uppercase tracking-wider font-bold">Live</span></button>
+    <button data-tab="buy" id="nav-buy" class="nav-btn flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-slate-500 transition-colors"><span class="text-base mb-0.5">🛒</span><span class="text-[9px] uppercase tracking-wider font-bold">Buy</span></button>
+    <button data-tab="badges" id="nav-badges" class="nav-btn flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-slate-500 transition-colors"><span class="text-base mb-0.5">🗳️</span><span class="text-[9px] uppercase tracking-wider font-bold">Badges</span></button>
+    <button data-tab="settings" id="nav-settings" class="nav-btn flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-slate-500 transition-colors"><span class="text-base mb-0.5">⚙️</span><span class="text-[9px] uppercase tracking-wider font-bold">Config</span></button>
+  </nav>
 
-<!-- FLOATING TEST WIDGET -->
-<div id="testWidget" class="fixed right-4 bottom-24 z-50 flex flex-col items-end space-y-2">
-<!-- Panel -->
-<div id="testPanel" class="bg-slate-800 border-2 border-slate-600 rounded-xl p-4 shadow-[0_0_30px_rgba(0,0,0,0.8)] hidden w-56 space-y-3 transform origin-bottom-right transition-transform">
-<h4 class="text-amber-400 font-bold text-[10px] uppercase tracking-widest border-b border-slate-700 pb-1.5 flex items-center gap-2"><span>🧪</span> Debug Suite</h4>
-
-<div class="space-y-1">
-<label class="text-[9px] text-slate-400 uppercase tracking-widest font-bold">Simulated Profile:</label>
-<select id="roleSelector" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-xs text-emerald-300 font-mono focus:outline-none">
-<option value="Akela">Akela (Admin)</option>
-<option value="Scouter">Scouter (Leader)</option>
-<option value="Parent">Parent (Youth view)</option>
-</select>
-</div>
-
-<div class="border-t border-slate-700 pt-3 space-y-2">
-<button id="simArrivalsBtn" class="w-full bg-slate-700 hover:bg-slate-600 text-white text-[9px] py-2 rounded-lg uppercase tracking-wider font-bold transition">Simulate 5 Arrivals</button>
-<button id="simPhaseBtn" class="w-full bg-slate-700 hover:bg-slate-600 text-white text-[9px] py-2 rounded-lg uppercase tracking-wider font-bold transition">Force Rotation Alert</button>
-<button id="simBudgetBtn" class="w-full bg-slate-700 hover:bg-slate-600 text-white text-[9px] py-2 rounded-lg uppercase tracking-wider font-bold transition">Reset Budget Target</button>
-</div>
-</div>
-
-<!-- Floating Button -->
-<button id="toggleTestBtn" class="bg-amber-500 hover:bg-amber-400 text-slate-900 rounded-full h-12 w-12 flex items-center justify-center shadow-xl border-2 border-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.5)] active:scale-95 transition-transform">
-<span class="text-xl leading-none">⚙️</span>
-</button>
-</div>
-
-<!-- FULL SCREEN ROTATION ALERT MODAL -->
-<div id="rotationModal" class="fixed inset-0 bg-amber-500/95 backdrop-blur-md z-[60] flex items-center justify-center p-4 animate-siren hidden">
-<div class="bg-slate-950 border-4 border-amber-300 rounded-3xl p-8 text-center space-y-6 shadow-2xl max-w-sm w-full">
-<div class="text-7xl animate-spin mx-auto" style="animation-duration: 3s; width: min-content;">🔄</div>
-<h1 class="text-5xl font-black text-amber-400 uppercase tracking-widest drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]">SHIFT!</h1>
-<div class="bg-slate-900 p-5 rounded-2xl border-2 border-slate-700 shadow-inner">
-<p class="text-xs text-slate-400 uppercase tracking-widest font-black mb-2">Executing Phase</p>
-<p id="modalStepName" class="text-xl text-slate-100 font-bold leading-tight">Phase Name</p>
-</div>
-</div>
-</div>
-
-<!-- HELP MODAL -->
-<div id="helpModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-[60] flex items-center justify-center p-4 hidden">
-<div class="bg-slate-800 border-2 border-rose-500 rounded-2xl p-6 max-w-sm w-full space-y-5 text-center shadow-[0_0_30px_rgba(244,63,94,0.3)]">
-<span class="text-5xl drop-shadow-lg">📢</span>
-<h3 class="font-black text-xl text-rose-400 uppercase tracking-widest">Support Beacon</h3>
-<div id="helpModalBody" class="space-y-3 pt-2">
-<button id="urgentHelpBtn" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-black uppercase tracking-widest py-4 rounded-xl text-xs shadow-lg border border-rose-400 active:scale-95 transition-transform">🚨 URGENT RED: Immediately</button>
-<button id="routineHelpBtn" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black uppercase tracking-widest py-4 rounded-xl text-xs shadow-lg border border-amber-300 active:scale-95 transition-transform">🙋 ROUTINE YELLOW: When Free</button>
-<button id="closeHelpBtn" class="w-full bg-slate-900 text-slate-500 font-bold uppercase tracking-widest py-3 rounded-xl text-[10px] border border-slate-800 mt-2 active:scale-95 transition-transform">Abort Signal</button>
-</div>
-</div>
-</div>
-
-<!-- Bottom Nav -->
-<nav class="bg-slate-950/95 backdrop-blur border-t border-slate-800 fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40 flex overflow-x-auto no-scrollbar p-1.5 space-x-1 shadow-[0_-10px_15px_rgba(0,0,0,0.5)]">
-
-<button data-tab="attendance" class="nav-btn flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-amber-400 font-bold bg-slate-900 shadow-inner transition-colors"><span class="text-base mb-0.5">⛺</span><span class="text-[9px] uppercase tracking-wider font-bold">Arrive</span></button>
-<button data-tab="planner" class="nav-btn flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-slate-500 transition-colors"><span class="text-base mb-0.5">🧠</span><span class="text-[9px] uppercase tracking-wider font-bold">Plan</span></button>
-<button data-tab="camps" class="nav-btn flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-slate-500 transition-colors"><span class="text-base mb-0.5">🏕️</span><span class="text-[9px] uppercase tracking-wider font-bold">Camps</span></button>
-<button data-tab="live" class="nav-btn flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-slate-500 transition-colors"><span class="text-base mb-0.5">⏱️</span><span class="text-[9px] uppercase tracking-wider font-bold">Live</span></button>
-<button data-tab="buy" class="nav-btn flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-slate-500 transition-colors"><span class="text-base mb-0.5">🛒</span><span class="text-[9px] uppercase tracking-wider font-bold">Buy</span></button>
-<button data-tab="badges" class="nav-btn flex flex-col items-center py-1.5 px-3 rounded-lg shrink-0 text-slate-500 transition-colors"><span class="text-base mb-0.5">🗳️</span><span class="text-[9px] uppercase tracking-wider font-bold">Badges</span></button>
-</nav>
-
-<!-- ROBUST JAVASCRIPT ENGINE -->
-<script>
-// System State - integrating the exact 34-Cub Lair roster and Scouter data
-const state = {
-role: 'Akela',
-adminMode: false,
-budgetCrafts: 184.51,
-orderApproved: false,
-cubs: [
-// Lair 1 (John, Kelsey)
-{ id: 1, name: 'Hannah', lair: 1, status: 'absent' }, { id: 2, name: 'Aspen', lair: 1, status: 'absent' },
-{ id: 3, name: 'Brookie', lair: 1, status: 'absent' }, { id: 4, name: 'Abigail', lair: 1, status: 'absent' },
-{ id: 5, name: 'Benjamin', lair: 1, status: 'absent' }, { id: 6, name: 'Gavin', lair: 1, status: 'absent' },
-{ id: 7, name: 'Will C.', lair: 1, status: 'absent' }, { id: 8, name: 'James G.', lair: 1, status: 'absent' },
-{ id: 9, name: 'Titan', lair: 1, status: 'absent' },
-// Lair 2 (Jamie, Dan, Lacey)
-{ id: 10, name: 'Cameron', lair: 2, status: 'absent' }, { id: 11, name: 'Rory', lair: 2, status: 'absent' },
-{ id: 12, name: 'Liam', lair: 2, status: 'absent' }, { id: 13, name: 'Alexis', lair: 2, status: 'absent' },
-{ id: 14, name: 'Marilla', lair: 2, status: 'absent' }, { id: 15, name: 'Briken', lair: 2, status: 'absent' }, 
+  <!-- JAVASCRIPT ENGINE -->
+  <script>
+    const state = {
+      role: 'Akela', 
+      adminMode: false,
+      budgetCrafts: 184.51,
+      orderApproved: false,
+      features: { aiPlanner: true, voice: true, procurement: true, badges: true },
+      
+      scouters: [
+        { id: 's1', name: 'Scott (Akela)', status: 'absent', avail: [1,1,1] },
+        { id: 's2', name: 'John', status: 'absent', avail: [1,1,0] },
+        { id: 's3', name: 'Kelsey', status: 'absent', avail: [1,0,1] },
+        { id: 's4', name: 'Jamie', status: 'absent', avail: [1,1,1] },
+        { id: 's5', name: 'Dan', status: 'absent', avail: [1,1,1] },
+        { id: 's6', name: 'Lacey', status: 'absent', avail: [1,1,0] },
+        { id: 's7', name: 'Luke', status: 'absent', avail: [1,0,1] },
+        { id: 's8', name: 'Cam', status: 'absent', avail: [0,1,1] },
+        { id: 's9', name: 'Jen', status: 'absent', avail: [1,1,1] },
+        { id: 's10', name: 'Dean', status: 'absent', avail: [1,0,0] }
+      ],
+      cubs: [
+        // Lair 1 (John, Kelsey)
+        { id: 1, name: 'Hannah', lair: 1, status: 'absent' }, { id: 2, name: 'Aspen', lair: 1, status: 'absent' }, 
+        { id: 3, name: 'Brookie', lair: 1, status: 'absent' }, { id: 4, name: 'Abigail', lair: 1, status: 'absent' }, 
+        { id: 5, name: 'Benjamin', lair: 1, status: 'absent' }, { id: 6, name: 'Gavin', lair: 1, status: 'absent' }, 
+        { id: 7, name: 'Will C.', lair: 1, status: 'absent' }, { id: 8, name: 'James G.', lair: 1, status: 'absent' }, 
+        { id: 9, name: 'Titan', lair: 1, status: 'absent' },
+        // Lair 2 (Jamie, Dan, Lacey)
+        { id: 10, name: 'Cameron', lair: 2, status: 'absent' }, { id: 11, name: 'Rory', lair: 2, status: 'absent' }, 
+        { id: 12, name: 'Liam', lair: 2, status: 'absent' }, { id: 13, name: 'Alexis', lair: 2, status: 'absent' }, 
+        { id: 14, name: 'Marilla', lair: 2, status: 'absent' }, { id: 15, name: 'Briken', lair: 2, status: 'absent' }, 
         { id: 16, name: 'Owen', lair: 2, status: 'absent' }, { id: 17, name: 'Riley', lair: 2, status: 'absent' },
         // Lair 3 (Luke, Cam)
         { id: 18, name: 'Hayes', lair: 3, status: 'absent' }, { id: 19, name: 'Jackson', lair: 3, status: 'absent' }, 
@@ -352,10 +394,10 @@ cubs: [
         { id: 33, name: 'Vincent', lair: 4, status: 'absent' }, { id: 34, name: 'Noah', lair: 4, status: 'absent' }
       ],
       lairs: [
-        { id: 1, scouters: 'John & Kelsey' },
+        { id: 1, scouters: 'John, Kelsey' },
         { id: 2, scouters: 'Jamie, Dan, Lacey' },
-        { id: 3, scouters: 'Luke & Cam' },
-        { id: 4, scouters: 'Jen & Dean' }
+        { id: 3, scouters: 'Luke, Cam' },
+        { id: 4, scouters: 'Jen, Dean' }
       ],
       history: [],
       activityIdx: 0,
@@ -373,8 +415,6 @@ cubs: [
       ]
     };
 
-    // --- RENDER FUNCTIONS --- //
-
     function switchTab(tabName) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       const target = document.getElementById('tab-' + tabName);
@@ -391,29 +431,59 @@ cubs: [
       }
     }
 
-    function renderAttendance() {
-      const present = state.cubs.filter(c => c.status === 'present');
-      const absent = state.cubs.filter(c => c.status === 'absent');
+    function checkRatio() {
+      const pCubs = state.cubs.filter(c => c.status === 'present').length;
+      const pScouters = state.scouters.filter(s => s.status === 'present').length;
+      const requiredScouters = pCubs > 0 ? Math.max(2, Math.ceil(pCubs / 8)) : 0;
       
-      document.getElementById('presentCount').innerText = present.length;
-      document.getElementById('remainingCount').innerText = absent.length;
-      document.getElementById('totalCount').innerText = state.cubs.length;
+      const banner = document.getElementById('ratioBanner');
+      if(pCubs === 0) {
+        banner.className = "bg-slate-900 text-slate-400 border-b border-slate-800 p-2 text-center text-[10px] font-bold uppercase tracking-widest sticky top-[68px] z-20 shadow-md transition-colors duration-300";
+        banner.innerText = "Ratio: Awaiting Arrivals";
+      } else if(pScouters >= requiredScouters) {
+        banner.className = "bg-emerald-950 text-emerald-300 border-b border-emerald-800 p-2 text-center text-[10px] font-bold uppercase tracking-widest sticky top-[68px] z-20 shadow-md transition-colors duration-300";
+        banner.innerText = `✅ Ratio Met (${pScouters} Scouters for ${pCubs} Cubs)`;
+      } else {
+        banner.className = "bg-rose-950 text-rose-300 border-b border-rose-800 p-2 text-center text-[10px] font-bold uppercase tracking-widest sticky top-[68px] z-20 shadow-md transition-colors duration-300";
+        banner.innerText = `❌ Need ${requiredScouters - pScouters} more Scouter(s) to meet 8:1`;
+      }
+    }
+
+    function renderAttendance() {
+      const pCubs = state.cubs.filter(c => c.status === 'present');
+      const aCubs = state.cubs.filter(c => c.status === 'absent');
+      const pScouters = state.scouters.filter(s => s.status === 'present');
+      const aScouters = state.scouters.filter(s => s.status === 'absent');
+      
+      document.getElementById('presentCount').innerText = pCubs.length;
+      document.getElementById('remainingCount').innerText = aCubs.length;
+      document.getElementById('presentScouterCount').innerText = pScouters.length;
       
       const pList = document.getElementById('presentList');
-      if(present.length === 0) {
-        pList.innerHTML = '<span class="text-xs text-emerald-500/70 italic font-mono">Awaiting arrivals...</span>';
+      if(pCubs.length === 0 && pScouters.length === 0) {
+        pList.innerHTML = '<span class="text-[11px] text-emerald-500/70 italic font-mono">Awaiting arrivals...</span>';
       } else {
-        pList.innerHTML = present.map(c => `<span class="bg-emerald-800 border border-emerald-500 text-emerald-50 text-[11px] px-2.5 py-1 rounded-full font-bold shadow-sm">✓ ${c.name}</span>`).join('');
+        let html = '';
+        pScouters.forEach(s => html += `<span class="bg-amber-900 border border-amber-600 text-amber-100 text-[11px] px-2.5 py-1 rounded-full font-bold shadow-sm">✓ ${s.name}</span>`);
+        pCubs.forEach(c => html += `<span class="bg-emerald-800 border border-emerald-500 text-emerald-50 text-[11px] px-2.5 py-1 rounded-full font-bold shadow-sm">✓ ${c.name}</span>`);
+        pList.innerHTML = html;
       }
       
+      const sList = document.getElementById('scouterList');
+      sList.innerHTML = aScouters.map(s => `
+        <button data-action="checkin-scouter" data-id="${s.id}" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 p-2 rounded-lg text-left flex justify-between items-center shadow-sm active:scale-95 transition-transform">
+          <span class="text-[11px] font-bold text-amber-200 truncate pr-2">${s.name}</span>
+          <span class="text-[9px] bg-amber-950 text-amber-400 px-1.5 py-0.5 rounded font-bold">+</span>
+        </button>
+      `).join('');
+      
       const aList = document.getElementById('absentList');
-      if(absent.length === 0) {
+      if(aCubs.length === 0) {
         aList.innerHTML = '<div class="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center text-emerald-400 font-bold text-sm shadow-inner">🎉 All 34 Cubs have arrived!</div>';
       } else {
-        // Group by Lair
         let html = '';
         state.lairs.forEach(lair => {
-          const lairCubs = absent.filter(c => c.lair === lair.id);
+          const lairCubs = aCubs.filter(c => c.lair === lair.id);
           if(lairCubs.length > 0) {
             html += `<div class="bg-slate-800 p-3 rounded-xl border border-slate-700 shadow-sm">`;
             html += `<h5 class="text-[10px] font-black text-amber-400 uppercase tracking-widest border-b border-slate-700 pb-1.5 mb-2">Lair ${lair.id} <span class="text-slate-500 font-mono font-normal">(${lair.scouters})</span></h5>`;
@@ -422,7 +492,7 @@ cubs: [
               html += `
                 <div class="flex items-center justify-between bg-slate-900 p-2.5 rounded-lg border border-slate-800">
                   <span class="text-xs font-bold text-slate-200">${c.name}</span>
-                  <button data-action="checkin" data-id="${c.id}" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider active:scale-95 transition-transform">Arrive</button>
+                  <button data-action="checkin-cub" data-id="${c.id}" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider active:scale-95 transition-transform">Arrive</button>
                 </div>
               `;
             });
@@ -431,6 +501,20 @@ cubs: [
         });
         aList.innerHTML = html;
       }
+      
+      checkRatio();
+    }
+
+    function renderScouterMatrix() {
+      const tbody = document.getElementById('availabilityMatrix');
+      tbody.innerHTML = state.scouters.map(s => `
+        <tr class="border-b border-slate-700 hover:bg-slate-900">
+          <td class="p-1.5 font-bold text-amber-200">${s.name}</td>
+          <td class="p-1.5 text-center">${s.avail[0] ? '✅' : '❌'}</td>
+          <td class="p-1.5 text-center">${s.avail[1] ? '✅' : '❌'}</td>
+          <td class="p-1.5 text-center">${s.avail[2] ? '✅' : '❌'}</td>
+        </tr>
+      `).join('');
     }
 
     function renderLive() {
@@ -449,44 +533,26 @@ cubs: [
           </button>
         `;
       } else {
-        container.innerHTML = `
-          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center mt-6">
-            <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Waiting for Akela to advance phase...</span>
-          </div>
-        `;
+        container.innerHTML = `<div class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center mt-6"><span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Waiting for Akela...</span></div>`;
       }
     }
 
     function renderBuy() {
       const container = document.getElementById('buyActionContainer');
       const badge = document.getElementById('buyBadge');
-      
       document.getElementById('budgetValue').innerText = '$' + state.budgetCrafts.toFixed(2);
 
       if(state.orderApproved) {
         badge.innerText = "Dispatched";
         badge.className = "text-[9px] font-black bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded uppercase tracking-widest shadow";
-        container.innerHTML = `
-          <button disabled class="w-full py-3.5 rounded-xl border font-bold text-xs tracking-widest uppercase transition-all bg-slate-900 border-slate-800 text-slate-500 cursor-not-allowed">
-            ✓ REQUISITION DISPATCHED
-          </button>
-        `;
+        container.innerHTML = `<button disabled class="w-full py-3.5 rounded-xl border font-bold text-xs tracking-widest uppercase bg-slate-900 border-slate-800 text-slate-500 cursor-not-allowed">✓ REQUISITION DISPATCHED</button>`;
       } else {
         badge.innerText = "Approval Req";
         badge.className = "text-[9px] font-black bg-amber-500 text-slate-950 px-2 py-0.5 rounded uppercase tracking-widest shadow";
-        
         if(state.role === 'Akela') {
-          container.innerHTML = `
-            <button data-action="approve-buy" class="w-full py-3.5 rounded-xl border font-bold text-xs tracking-widest uppercase transition-all bg-emerald-600 hover:bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)] active:scale-95">
-              AUTHORIZE & SHIP TO HOME ($15.49)
-            </button>
-          `;
+          container.innerHTML = `<button data-action="approve-buy" class="w-full py-3.5 rounded-xl border font-bold text-xs tracking-widest uppercase transition-all bg-emerald-600 hover:bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)] active:scale-95">AUTHORIZE & SHIP TO HOME ($15.49)</button>`;
         } else {
-          container.innerHTML = `
-            <button disabled class="w-full py-3.5 rounded-xl border font-bold text-[10px] tracking-widest uppercase transition-all bg-slate-900 border-slate-800 text-slate-400 cursor-not-allowed">
-              Requisition Pending Akela Approval
-            </button>
-          `;
+          container.innerHTML = `<button disabled class="w-full py-3.5 rounded-xl border font-bold text-[10px] tracking-widest uppercase bg-slate-900 border-slate-800 text-slate-400 cursor-not-allowed">Requisition Pending Akela</button>`;
         }
       }
     }
@@ -497,7 +563,7 @@ cubs: [
         adminPanel.classList.remove('hidden');
       } else {
         adminPanel.classList.add('hidden');
-        state.adminMode = false; // Parent cannot be in admin mode
+        state.adminMode = false;
       }
       
       const btn = document.getElementById('adminToggleBtn');
@@ -523,9 +589,7 @@ cubs: [
             <div class="mt-4 flex justify-between items-center">
               <span class="text-[10px] font-mono font-bold text-emerald-400">${b.votes} Votes</span>
               ${state.adminMode ? `
-                <button data-action="toggle-badge" data-id="${b.id}" class="px-2.5 py-1 rounded shadow text-[9px] uppercase font-black tracking-widest border active:scale-95 transition-transform ${b.enabled ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-emerald-950/80 text-emerald-300 border-emerald-800'}">
-                  ${b.enabled ? 'MASK' : 'ENABLE'}
-                </button>
+                <button data-action="toggle-badge" data-id="${b.id}" class="px-2.5 py-1 rounded shadow text-[9px] uppercase font-black tracking-widest border active:scale-95 transition-transform ${b.enabled ? 'bg-rose-950/80 text-rose-300 border-rose-800' : 'bg-emerald-950/80 text-emerald-300 border-emerald-800'}">${b.enabled ? 'MASK' : 'ENABLE'}</button>
               ` : `
                 <button data-action="vote-badge" data-id="${b.id}" class="bg-emerald-600 border border-emerald-400 text-white px-3 py-1.5 rounded-lg shadow-md text-[10px] uppercase font-black tracking-widest active:scale-95 transition-transform">VOTE 🗳️</button>
               `}
@@ -535,62 +599,106 @@ cubs: [
       }).join('');
     }
 
+    function renderFeatures() {
+      // Toggle tabs
+      document.getElementById('nav-planner').style.display = state.features.aiPlanner ? 'flex' : 'none';
+      document.getElementById('voiceCheckInBtn').style.display = state.features.voice ? 'flex' : 'none';
+      document.getElementById('nav-buy').style.display = state.features.procurement ? 'flex' : 'none';
+      document.getElementById('nav-badges').style.display = state.features.badges ? 'flex' : 'none';
+      
+      // Update config buttons
+      document.querySelectorAll('.feat-btn').forEach(btn => {
+        const feat = btn.getAttribute('data-feat');
+        if(state.features[feat]) {
+          btn.innerText = "ON";
+          btn.className = "feat-btn bg-emerald-600 text-white px-3 py-1 rounded text-[9px] font-bold uppercase active:scale-95 transition-colors";
+        } else {
+          btn.innerText = "OFF";
+          btn.className = "feat-btn bg-slate-700 text-slate-400 px-3 py-1 rounded text-[9px] font-bold uppercase active:scale-95 transition-colors";
+        }
+      });
+    }
+
     // --- ACTIONS --- //
 
-    function doCheckIn(id) {
-      const cub = state.cubs.find(c => c.id === id);
-      if(cub && cub.status === 'absent') {
-        cub.status = 'present';
-        state.history.push(id);
-        renderAttendance();
+    function doVoiceCheckIn() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Voice recognition is not supported on this browser.");
+        return;
       }
-    }
-
-    function doSimulateArrivals() {
-      const absent = state.cubs.filter(c => c.status === 'absent');
-      for(let i = 0; i < Math.min(5, absent.length); i++) {
-        absent[i].status = 'present';
-        state.history.push(absent[i].id);
-      }
-      renderAttendance();
-      document.getElementById('testPanel').classList.add('hidden');
-    }
-
-    function triggerHelp(level) {
-      const body = document.getElementById('helpModalBody');
-      const msg = level === 'urgent' ? '🚨 URGENT: Deploying Rapid Assistance!' : '🙋 ROUTINE: Logged for next available Scouter.';
-      body.innerHTML = `<div class="bg-emerald-950 border-2 border-emerald-500 text-emerald-100 p-5 rounded-xl text-xs font-black uppercase tracking-widest shadow-[0_0_15px_rgba(16,185,129,0.4)]">${msg}</div>`;
-      setTimeout(() => { 
-        document.getElementById('helpModal').classList.add('hidden');
-        // Reset modal body
-        body.innerHTML = `
-          <button data-action="help-urgent" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-black uppercase tracking-widest py-4 rounded-xl text-xs shadow-lg border border-rose-400 active:scale-95">🚨 URGENT RED: Immediately</button>
-          <button data-action="help-routine" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black uppercase tracking-widest py-4 rounded-xl text-xs shadow-lg border border-amber-300 active:scale-95">🙋 ROUTINE YELLOW: When Free</button>
-          <button data-action="help-close" class="w-full bg-slate-900 text-slate-500 font-bold uppercase tracking-widest py-3 rounded-xl text-[10px] border border-slate-800 mt-2 active:scale-95">Abort Signal</button>
-        `;
-      }, 2000);
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      
+      const micBtn = document.getElementById('voiceCheckInBtn');
+      micBtn.classList.add('mic-listening');
+      micBtn.innerHTML = "🎙️ Listening...";
+      
+      recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript.toLowerCase();
+        let matched = false;
+        
+        // Check Cubs
+        state.cubs.forEach(cub => {
+          if (transcript.includes(cub.name.toLowerCase().split(' ')[0]) && cub.status === 'absent') {
+            cub.status = 'present';
+            state.history.push({type: 'cub', id: cub.id});
+            matched = true;
+          }
+        });
+        // Check Scouters
+        state.scouters.forEach(scouter => {
+          const sName = scouter.name.toLowerCase().split(' ')[0];
+          if (transcript.includes(sName) && scouter.status === 'absent') {
+            scouter.status = 'present';
+            state.history.push({type: 'scouter', id: scouter.id});
+            matched = true;
+          }
+        });
+        
+        if(matched) renderAttendance();
+      };
+      
+      recognition.onend = function() {
+        micBtn.classList.remove('mic-listening');
+        micBtn.innerHTML = "🎤 Voice";
+      };
+      
+      recognition.start();
     }
 
     // --- EVENT DELEGATION BINDING --- //
-    // This guarantees buttons work flawlessly without timing issues.
 
     function bindEvents() {
-      
-      // Nav Tabs
       document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.addEventListener('click', (e) => switchTab(e.currentTarget.getAttribute('data-tab')));
       });
 
-      // Global Click Handler (Delegation)
       document.body.addEventListener('click', (e) => {
-        
         const actionBtn = e.target.closest('[data-action]');
         if(!actionBtn) return;
         
         const action = actionBtn.getAttribute('data-action');
         
-        if(action === 'checkin') {
-          doCheckIn(parseInt(actionBtn.getAttribute('data-id')));
+        if(action === 'checkin-cub') {
+          const id = parseInt(actionBtn.getAttribute('data-id'));
+          const cub = state.cubs.find(c => c.id === id);
+          if(cub) { cub.status = 'present'; state.history.push({type: 'cub', id: id}); renderAttendance(); }
+        }
+        else if(action === 'checkin-scouter') {
+          const id = actionBtn.getAttribute('data-id');
+          const scouter = state.scouters.find(s => s.id === id);
+          if(scouter) { scouter.status = 'present'; state.history.push({type: 'scouter', id: id}); renderAttendance(); }
+        }
+        else if(action === 'toggle-feature') {
+          const feat = actionBtn.getAttribute('data-feat');
+          state.features[feat] = !state.features[feat];
+          renderFeatures();
+          // Safety: switch to attendance if hiding current tab
+          if(!state.features.aiPlanner && state.tab === 'planner') switchTab('attendance');
+          if(!state.features.procurement && state.tab === 'buy') switchTab('attendance');
+          if(!state.features.badges && state.tab === 'badges') switchTab('attendance');
         }
         else if(action === 'advance-phase') {
           if(state.activityIdx < state.schedule.length - 1) {
@@ -615,20 +723,24 @@ cubs: [
           const b = state.badges.find(x => x.id === actionBtn.getAttribute('data-id'));
           if(b) { b.enabled = !b.enabled; renderBadges(); }
         }
-        else if(action === 'help-urgent') triggerHelp('urgent');
-        else if(action === 'help-routine') triggerHelp('routine');
-        else if(action === 'help-close') document.getElementById('helpModal').classList.add('hidden');
       });
 
-      // Static Element Listeners
+      // Specific IDs
       document.getElementById('undoBtn').addEventListener('click', () => {
         if(state.history.length > 0) {
-          const id = state.history.pop();
-          const cub = state.cubs.find(c => c.id === id);
-          if(cub) cub.status = 'absent';
+          const last = state.history.pop();
+          if(last.type === 'cub') {
+            const cub = state.cubs.find(c => c.id === last.id);
+            if(cub) cub.status = 'absent';
+          } else {
+            const scouter = state.scouters.find(s => s.id === last.id);
+            if(scouter) scouter.status = 'absent';
+          }
           renderAttendance();
         }
       });
+
+      document.getElementById('voiceCheckInBtn').addEventListener('click', doVoiceCheckIn);
 
       document.getElementById('addCubActionBtn').addEventListener('click', () => {
         const input = document.getElementById('newCubInput');
@@ -660,59 +772,42 @@ cubs: [
             clearInterval(interval);
             setTimeout(() => {
               document.getElementById('aiTerminal').classList.add('hidden');
-              document.getElementById('aiControls').classList.remove('hidden');
               document.getElementById('aiCard').classList.remove('ai-glow');
+              document.getElementById('aiResults').classList.remove('hidden');
             }, 800);
           }
         }, 900);
       });
 
-      document.getElementById('helpBtn').addEventListener('click', () => {
-        document.getElementById('helpModal').classList.remove('hidden');
+      document.getElementById('searchCampsBtn').addEventListener('click', (e) => {
+        const btn = e.target;
+        btn.innerText = "Querying live property databases...";
+        btn.classList.add('animate-pulse');
+        setTimeout(() => {
+          btn.classList.remove('animate-pulse');
+          btn.style.display = 'none';
+          document.getElementById('campResults').classList.remove('hidden');
+        }, 1500);
       });
 
       document.getElementById('adminToggleBtn').addEventListener('click', () => {
         state.adminMode = !state.adminMode;
         renderBadges();
       });
-
-      // Test Mode Widget Listeners
-      document.getElementById('toggleTestBtn').addEventListener('click', () => {
-        document.getElementById('testPanel').classList.toggle('hidden');
-      });
       
-      document.getElementById('roleSelector').addEventListener('change', (e) => {
+      document.getElementById('roleSelect').addEventListener('change', (e) => {
         state.role = e.target.value;
         document.getElementById('roleBadge').innerText = 'Role: ' + state.role;
-        document.getElementById('testPanel').classList.add('hidden');
-        
-        // Re-render UI based on new role permissions
         renderLive();
         renderBuy();
         renderBadges();
       });
-
-      document.getElementById('simArrivalsBtn').addEventListener('click', doSimulateArrivals);
-      
-      document.getElementById('simPhaseBtn').addEventListener('click', () => {
-        document.getElementById('testPanel').classList.add('hidden');
-        document.getElementById('rotationModal').classList.remove('hidden');
-        if(navigator.vibrate) navigator.vibrate([300, 100, 400]);
-        setTimeout(() => document.getElementById('rotationModal').classList.add('hidden'), 3500);
-      });
-
-      document.getElementById('simBudgetBtn').addEventListener('click', () => {
-        state.budgetCrafts = 184.51;
-        state.orderApproved = false;
-        renderBuy();
-        document.getElementById('testPanel').classList.add('hidden');
-      });
     }
 
-    // --- INITIALIZATION --- //
-    // Guarantee flawless execution regardless of mobile browser timing
     function initApp() {
       bindEvents();
+      renderFeatures();
+      renderScouterMatrix();
       renderAttendance();
       renderLive();
       renderBuy();
@@ -724,8 +819,6 @@ cubs: [
     } else {
       initApp();
     }
-
   </script>
 </body>
 </html>
-                                                         
